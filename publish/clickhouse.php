@@ -24,6 +24,6 @@ return [
         // 示例: 'game_id' => 1, 
     ],
 
-    // 适配器
-    'adapter' => '', // \ClickHouseQuery\Adapters\HyperfAdapter::class   || \ClickHouseQuery\Adapters\ThinkPHPAdapter::class
+    // 适配器 示例: \ClickHouseQuery\Adapters\HyperfAdapter::class
+    'adapter' => '', 
 ]; 

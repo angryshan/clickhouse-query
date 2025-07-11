@@ -369,6 +369,14 @@ class ClickHouseQueryBuilder
     }
 
     /**
+     * 获取构建WHERE部分
+     */
+    public function getBuildWhere(): string
+    {
+        return $this->buildWhere();
+    }
+
+    /**
      * 构建GROUP BY部分
      */
     private function buildGroupBy(): string
@@ -382,6 +390,14 @@ class ClickHouseQueryBuilder
     private function buildOrderBy(): string
     {
         return !empty($this->orderBy) ? 'ORDER BY ' . implode(', ', $this->orderBy) : '';
+    }
+
+    /**
+     * 获取构建ORDER BY部分
+     */
+    public function getBuildOrderBy(): string
+    {
+        return $this->buildOrderBy();
     }
 
     /**

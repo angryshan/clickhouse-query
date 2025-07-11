@@ -1,6 +1,6 @@
 {
     "name": "angryshan/clickhouse-query",
-    "description": "ClickHouse查询构建器，提供基于链式API的ClickHouse查询解决方案",
+    "description": "ClickHouse查询构建器，基于PDO+MySQL协议连接，提供链式API的ClickHouse查询解决方案",
     "license": "MIT",
     "authors": [
         {

@@ -55,6 +55,9 @@ return [
     'global_conditions' => [
         // 示例: 'game_id' => 1, 
     ],
+    
+    // 自定义适配器类（必须）
+    'adapter' => \ClickHouseQuery\Adapters\ThinkPHPAdapter::class, // 或 \ClickHouseQuery\Adapters\HyperfAdapter::class
 ]; 
 ```
 
@@ -140,13 +143,27 @@ ClickHouse支持两种主要的连接协议：
 ```
 
 框架兼容性说明：
-- **ThinkPHP**: 仅支持PDO+MySQL接口方式
-- **Hyperf**: 理论上支持多种连接方式，但本组件仅针对PDO方式优化
+- **ThinkPHP**: 使用`\ClickHouseQuery\Adapters\ThinkPHPAdapter`适配器
+- **Hyperf**: 使用`\ClickHouseQuery\Adapters\HyperfAdapter`适配器
+
+**注意**: 必须在配置中明确指定适配器，组件不再自动检测框架环境。
 
 如需使用HTTP/TCP原生协议，需要：
 
 1. 创建自定义适配器类实现`ConnectionAdapterInterface`接口
-2. 在配置中指定自定义适配器：`'adapter' => YourCustomAdapter::class`
+2. 在配置中指定自定义适配器：
+```php
+// 方法一：在clickhouse.php配置文件中指定
+return [
+    // 其他配置...
+    'adapter' => \Your\Custom\AdapterClass::class,
+];
+
+// 方法二：在初始化时指定
+$connection = new ClickHouseConnection([
+    'adapter' => \Your\Custom\AdapterClass::class,
+]);
+```
 
 ## 文档说明
 

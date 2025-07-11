@@ -5,7 +5,6 @@ declare(strict_types=1);
 
 namespace ClickHouseQuery\Adapters;
 
-use Exception;
 use think\db\ConnectionInterface;
 use think\facade\Db;
 use ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
@@ -56,12 +55,7 @@ class ThinkPHPAdapter implements ConnectionAdapterInterface
      */
     public function getRequestParams(): array
     {
-        if (function_exists('request')) {
-            $request = request();
-            if (method_exists($request, 'param')) {
-                return $request->param();
-            }
-        }
-        return [];
+        $request = request();
+        return $request->param();
     }
 }

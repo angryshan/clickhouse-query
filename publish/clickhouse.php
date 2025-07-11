@@ -23,4 +23,7 @@ return [
     'global_conditions' => [
         // 示例: 'game_id' => 1, 
     ],
+
+    // 适配器
+    'adapter' => '', // \ClickHouseQuery\Adapters\HyperfAdapter::class   || \ClickHouseQuery\Adapters\ThinkPHPAdapter::class
 ]; 

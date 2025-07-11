@@ -53,13 +53,8 @@ class HyperfAdapter implements ConnectionAdapterInterface
      */
     public function getRequestParams(): array
     {
-        if (class_exists('\Hyperf\HttpServer\Contract\RequestInterface')) {
-            $container = \Hyperf\Utils\ApplicationContext::getContainer();
-            if ($container->has(\Hyperf\HttpServer\Contract\RequestInterface::class)) {
-                $request = $container->get(\Hyperf\HttpServer\Contract\RequestInterface::class);
-                return $request->all();
-            }
-        }
-        return [];
+        $container = \Hyperf\Utils\ApplicationContext::getContainer();
+        $request = $container->get(\Hyperf\HttpServer\Contract\RequestInterface::class);
+        return $request->all();
     }
 }

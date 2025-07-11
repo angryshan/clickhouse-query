@@ -54,29 +54,24 @@ class ClickHouseConnection
      */
     public function __construct(array $config = [])
     {
-        // 配置选项覆盖默认值
-        if (isset($config['pool_name'])) {
-            $this->poolName = $config['pool_name'];
-        } else {
-            // 尝试从配置中读取
-            $poolName = config('clickhouse.pool_name', 'clickhouse');
-            $this->poolName = $poolName;
-        }
+        // 设置连接池名称
+        $this->poolName = $config['pool_name'] ?? config('clickhouse.pool_name', 'clickhouse');
         
-        if (isset($config['max_running_processes'])) {
-            $this->maxRunningProcesses = $config['max_running_processes'];
-        } else {
-            $this->maxRunningProcesses = config('clickhouse.max_running_processes', 5);
-        }
-        
-        if (isset($config['max_wait_attempts'])) {
-            $this->maxWaitAttempts = $config['max_wait_attempts'];
-        } else {
-            $this->maxWaitAttempts = config('clickhouse.max_wait_attempts', 60);
-        }
-        
-        // 根据环境自动选择适配器
+        // 创建适配器
         $this->adapter = $this->createAdapter($config);
+        
+        // 从适配器获取配置
+        $this->maxRunningProcesses = $config['max_running_processes'] ?? 
+            $this->adapter->getConfig('connection_control.max_running_processes', 5);
+            
+        $this->maxWaitAttempts = $config['max_wait_attempts'] ?? 
+            $this->adapter->getConfig('connection_control.max_wait_attempts', 60);
+            
+        $this->waitMinMicroseconds = $config['wait_min_microseconds'] ?? 
+            $this->adapter->getConfig('connection_control.wait_min_microseconds', 500000);
+            
+        $this->waitMaxMicroseconds = $config['wait_max_microseconds'] ?? 
+            $this->adapter->getConfig('connection_control.wait_max_microseconds', 1000000);
         
         $this->initGlobalConditions();
     }
@@ -86,20 +81,16 @@ class ClickHouseConnection
      */
     private function createAdapter(array $config): ConnectionAdapterInterface
     {
-        // 检查是否在ThinkPHP环境
-        if (class_exists('\think\facade\Db')) {
-            return new ThinkPHPAdapter($this->poolName);
-        }
-        
-        // 检查是否在Hyperf环境
-        if (class_exists('\Hyperf\DB\DB')) {
-            return new HyperfAdapter($this->poolName);
-        }
-        
-        // 如果配置中指定了适配器类
+        // 优先使用配置中指定的适配器
         if (isset($config['adapter']) && class_exists($config['adapter'])) {
             $adapterClass = $config['adapter'];
             return new $adapterClass($this->poolName);
+        }
+        
+        // 尝试从全局配置中获取适配器
+        $configAdapter = config('clickhouse.adapter');
+        if (!empty($configAdapter) && class_exists($configAdapter)) {
+            return new $configAdapter($this->poolName);
         }
         
         throw new ClickHouseQueryException('无法确定适合的数据库适配器，请在配置中指定adapter参数');

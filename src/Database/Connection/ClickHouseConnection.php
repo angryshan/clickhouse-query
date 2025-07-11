@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace ClickHouseQuery\Database\Connection;
 
-use Exception;
-use RuntimeException;
-use Throwable;
+use ClickHouseQuery\Exceptions\ClickHouseQueryException;
 use ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
 use ClickHouseQuery\Adapters\HyperfAdapter;
 use ClickHouseQuery\Adapters\ThinkPHPAdapter;
+use Throwable;
 
 /**
  * ClickHouse数据库连接
@@ -103,7 +102,7 @@ class ClickHouseConnection
             return new $adapterClass($this->poolName);
         }
         
-        throw new RuntimeException('无法确定适合的数据库适配器，请在配置中指定adapter参数');
+        throw new ClickHouseQueryException('无法确定适合的数据库适配器，请在配置中指定adapter参数');
     }
     
     /**
@@ -112,7 +111,7 @@ class ClickHouseConnection
      * @param string $sql SQL语句
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array 查询结果
-     * @throws Exception
+     * @throws ClickHouseQueryException
      */
     public function execute(string $sql, bool $useConnectionControl = false): array
     {
@@ -122,20 +121,20 @@ class ClickHouseConnection
             }
             return $this->adapter->query($sql);
         } catch (Throwable $e) {
-            throw new Exception($e->getMessage());
+            throw new ClickHouseQueryException($e->getMessage());
         }
     }
     
     /**
      * 直接执行SQL查询
-     * @throws Exception
+     * @throws ClickHouseQueryException
      */
     public function query(string $sql)
     {
         try {
             return $this->adapter->query($sql);
         } catch (Throwable $e) {
-            throw new Exception($e->getMessage());
+            throw new ClickHouseQueryException($e->getMessage());
         }
     }
 
@@ -157,7 +156,7 @@ class ClickHouseConnection
 
     /**
      * 等待可用连接
-     * @throws Exception
+     * @throws ClickHouseQueryException
      */
     private function waitForAvailableConnection(): void
     {
@@ -173,12 +172,12 @@ class ClickHouseConnection
             usleep(rand($this->waitMinMicroseconds, $this->waitMaxMicroseconds));
         }
 
-        throw new RuntimeException('等待可用连接超时');
+        throw new ClickHouseQueryException('等待可用连接超时');
     }
 
     /**
      * 获取当前运行的查询数
-     * @throws Exception
+     * @throws ClickHouseQueryException
      */
     private function getRunningQueriesCount(): ?int
     {
@@ -186,7 +185,7 @@ class ClickHouseConnection
             $result = $this->adapter->query('SELECT COUNT(*) AS running_queries FROM system.processes');
             return $result[0]['running_queries'] ?? null;
         } catch (Throwable $e) {
-            throw new Exception($e->getMessage());
+            throw new ClickHouseQueryException($e->getMessage());
         }
     }
 

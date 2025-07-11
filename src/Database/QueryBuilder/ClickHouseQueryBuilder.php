@@ -7,7 +7,7 @@ namespace ClickHouseQuery\Database\QueryBuilder;
 use ClickHouseQuery\Database\Connection\ClickHouseConnection;
 use ClickHouseQuery\Database\QueryBuilder\Traits\WhereBuilderTrait;
 use ClickHouseQuery\Database\QueryBuilder\Traits\WithFromBuilderTrait;
-use Exception;
+use ClickHouseQuery\Exceptions\ClickHouseQueryException;
 
 /**
  * 构建ClickHouse查询
@@ -140,7 +140,7 @@ class ClickHouseQueryBuilder
      *
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array 查询结果
-     * @throws Exception
+     * @throws ClickHouseQueryException
      */
     public function get(bool $useConnectionControl = false): array
     {
@@ -155,7 +155,7 @@ class ClickHouseQueryBuilder
      *
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array 第一条记录或空数组
-     * @throws Exception
+     * @throws ClickHouseQueryException
      */
     public function first(bool $useConnectionControl = false): array
     {
@@ -178,7 +178,7 @@ class ClickHouseQueryBuilder
      * @param string $column 要统计的字段，默认为 空
      * @param bool $useConnectionControl 是否使用连接控制
      * @return int 统计结果
-     * @throws Exception
+     * @throws ClickHouseQueryException
      */
     public function count(string $column = '', bool $useConnectionControl = false): int
     {
@@ -221,7 +221,7 @@ class ClickHouseQueryBuilder
      * @param string $sql SQL语句
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array 查询结果
-     * @throws Exception
+     * @throws ClickHouseQueryException
      */
     public function execute(string $sql, bool $useConnectionControl = false): array
     {
@@ -254,7 +254,7 @@ class ClickHouseQueryBuilder
      * @param string $countField 计数字段
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array 分页结果
-     * @throws Exception
+     * @throws ClickHouseQueryException
      */
     public function getPageData(
         array $params = [],

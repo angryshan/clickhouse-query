@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace ClickHouseQuery\Database\QueryBuilder\Traits;
 
-use InvalidArgumentException;
-
+use ClickHouseQuery\Exceptions\ClickHouseQueryException;
 /**
  * 条件查询
  * @package ClickHouseQuery\Database\QueryBuilder\Traits
@@ -177,7 +176,7 @@ trait WhereBuilderTrait
     {
         // 验证数组格式
         if (count($condition) !== 3) {
-            throw new InvalidArgumentException(
+            throw new ClickHouseQueryException(
                 '条件数组格式错误,应为: [field, operator, value]'
             );
         }
@@ -186,12 +185,12 @@ trait WhereBuilderTrait
 
         // 验证字段名
         if (!is_string($field) || empty($field)) {
-            throw new InvalidArgumentException('字段名必须是非空字符串');
+            throw new ClickHouseQueryException('字段名必须是非空字符串');
         }
 
         // 验证操作符
         if (!is_string($operator) || empty($operator)) {
-            throw new InvalidArgumentException('操作符必须是非空字符串');
+            throw new ClickHouseQueryException('操作符必须是非空字符串');
         }
 
         // 转换操作符为小写以统一比较
@@ -199,7 +198,7 @@ trait WhereBuilderTrait
         
         // 验证操作符是否支持
         if (!in_array($operator, $this->getSupportedOperators())) {
-            throw new InvalidArgumentException(
+            throw new ClickHouseQueryException(
                 sprintf('不支持的操作符: %s', $operator)
             );
         }
@@ -207,10 +206,10 @@ trait WhereBuilderTrait
         // 处理 IN/NOT IN 条件
         if (in_array($operator, ['in', 'not in'])) {
             if (!is_array($value)) {
-                throw new InvalidArgumentException('IN/NOT IN 操作符的值必须是数组');
+                throw new ClickHouseQueryException('IN/NOT IN 操作符的值必须是数组');
             }
             if (empty($value)) {
-                throw new InvalidArgumentException('IN/NOT IN 操作符的值数组不能为空');
+                throw new ClickHouseQueryException('IN/NOT IN 操作符的值数组不能为空');
             }
             return sprintf("`%s` %s (%s)", $field, strtoupper($operator), $this->formatInValues($value));
         }
@@ -218,10 +217,10 @@ trait WhereBuilderTrait
         // 处理 BETWEEN 条件
         if ($operator === 'between') {
             if (!is_array($value) || count($value) !== 2) {
-                throw new InvalidArgumentException('BETWEEN 操作符需要包含两个值的数组');
+                throw new ClickHouseQueryException('BETWEEN 操作符需要包含两个值的数组');
             }
             if ($value[0] === null || $value[1] === null) {
-                throw new InvalidArgumentException('BETWEEN 操作符的值不能为 NULL');
+                throw new ClickHouseQueryException('BETWEEN 操作符的值不能为 NULL');
             }
             return sprintf(
                 "`%s` BETWEEN %s AND %s",
@@ -233,7 +232,7 @@ trait WhereBuilderTrait
 
         // 验证普通条件的值
         if ($value === null) {
-            throw new InvalidArgumentException('条件值不能为 NULL,请使用 whereNull/whereNotNull');
+            throw new ClickHouseQueryException('条件值不能为 NULL,请使用 whereNull/whereNotNull');
         }
 
         return "`{$field}` {$operator} " . $this->quoteValue($value);
@@ -245,12 +244,12 @@ trait WhereBuilderTrait
     public function formatInValues(array $values): string 
     {
         if (empty($values)) {
-            throw new InvalidArgumentException('IN 条件的值不能为空数组');
+            throw new ClickHouseQueryException('IN 条件的值不能为空数组');
         }
         
         return implode(',', array_map(function ($value) {
             if ($value === null) {
-                throw new InvalidArgumentException('IN 条件的值不能为 NULL');
+                throw new ClickHouseQueryException('IN 条件的值不能为 NULL');
             }
             return is_numeric($value) ? $value : "'" . str_replace("'", "\'", $value) . "'";
         }, $values));

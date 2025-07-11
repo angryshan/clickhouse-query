@@ -93,7 +93,7 @@ class ClickHouseConnection
             return new $configAdapter($this->poolName);
         }
         
-        throw new ClickHouseQueryException('无法确定适合的数据库适配器，请在配置中指定adapter参数');
+        throw new ClickHouseQueryException('请在配置中指定框架数据库适配器(adapter)参数');
     }
     
     /**

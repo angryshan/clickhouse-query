@@ -1,6 +1,6 @@
 <?php
 
-namespace ClickHouseQuery\Adapters;
+namespace ClickHouseQuery\Factories;
 
 use ClickHouseQuery\Exceptions\ClickHouseQueryException;
 use ClickHouseQuery\Interfaces\ConnectionAdapterInterface;

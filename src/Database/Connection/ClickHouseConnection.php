@@ -6,7 +6,7 @@ namespace ClickHouseQuery\Database\Connection;
 
 use ClickHouseQuery\Exceptions\ClickHouseQueryException;
 use ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
-use ClickHouseQuery\Database\Factories\AdapterFactory;
+use ClickHouseQuery\Factories\AdapterFactory;
 use Throwable;
 
 /**

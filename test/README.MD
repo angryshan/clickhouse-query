@@ -11,7 +11,6 @@ test/
 ├── Tables/                 # 表结构定义
 │   └── TestTable.php      # 测试表定义
 └── Services/               # 业务服务层
-    ├── AbstractService.php # 服务基类
     └── TestService.php     # 测试服务实现
 ```
 
@@ -43,26 +42,6 @@ class TestTable extends AbstractTable
 ### 3.2 服务层 (Services)
 
 服务层负责封装业务逻辑和数据操作。
-
-**AbstractService.php**:
-```php
-<?php
-namespace ClickHouseQuery\Test\Services;
-
-use ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
-
-abstract class AbstractService
-{
-    // 当前操作的表名
-    protected string $table;
-
-    // 创建查询构建器
-    protected function query(): ClickHouseQueryBuilder
-    {
-        return new ClickHouseQueryBuilder($this->table);
-    }
-}
-```
 
 **TestService.php**:
 ```php

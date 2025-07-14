@@ -2,6 +2,7 @@
 
 namespace ClickHouseQuery\Test\Services;
 
+use ClickHouseQuery\Services\AbstractService;
 use ClickHouseQuery\Test\Tables\TestTable;
 
 class TestService extends AbstractService

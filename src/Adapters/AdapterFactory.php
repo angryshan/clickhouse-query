@@ -52,11 +52,14 @@ class AdapterFactory
     {
         $detectedFramework = $this->detectFramework();
         
-        return match($detectedFramework) {
-            'thinkphp' => new ThinkPHPAdapter($poolName),
-            'hyperf' => new HyperfAdapter($poolName),
-            default => null
-        };
+        switch ($detectedFramework) {
+            case 'thinkphp':
+                return new ThinkPHPAdapter($poolName);
+            case 'hyperf':
+                return new HyperfAdapter($poolName);
+            default:
+                return null;
+        }
     }
 
     /**

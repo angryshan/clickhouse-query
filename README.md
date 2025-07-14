@@ -56,7 +56,7 @@ return [
         // 示例: 'game_id' => 1, 
     ],
     
-    // 自定义适配器类（必须）
+    // 自定义适配器类
     'adapter' => \ClickHouseQuery\Adapters\ThinkPHPAdapter::class, // 或 \ClickHouseQuery\Adapters\HyperfAdapter::class
 ]; 
 ```
@@ -146,7 +146,12 @@ ClickHouse支持两种主要的连接协议：
 - **ThinkPHP**: 使用`\ClickHouseQuery\Adapters\ThinkPHPAdapter`适配器
 - **Hyperf**: 使用`\ClickHouseQuery\Adapters\HyperfAdapter`适配器
 
-**注意**: 必须在配置中明确指定适配器，组件不再自动检测框架环境。
+**适配器选择策略**:
+1. 优先使用配置中显式指定的适配器
+2. 如未指定，将尝试自动检测当前框架环境（仅开发环境）
+3. 如无法检测，将抛出异常要求指定适配器
+
+为确保生产环境的稳定性，**强烈建议**在配置中显式指定适配器。
 
 如需使用HTTP/TCP原生协议，需要：
 
@@ -163,6 +168,47 @@ return [
 $connection = new ClickHouseConnection([
     'adapter' => \Your\Custom\AdapterClass::class,
 ]);
+```
+
+## 高级功能
+
+### 条件构建
+
+使用when方法进行条件查询：
+
+```php
+$result = $builder
+    ->select(['id', 'name'])
+    ->when($hasStatus, function($query) use ($status) {
+        $query->where(['status' => $status]);
+    })
+    ->get();
+```
+
+### 分页查询
+
+```php
+$page = 1;
+$pageSize = 20;
+$result = $builder
+    ->select(['id', 'name'])
+    ->where(['status' => 1])
+    ->getPageData($page, $pageSize);
+```
+
+### 异常处理
+
+```php
+try {
+    $result = $builder->select(['id'])->get();
+} catch (ClickHouseQueryException $e) {
+    // 处理ClickHouse查询异常
+    $errorMessage = $e->getMessage();
+    $errorCode = $e->getCode();
+    // 记录日志或其他处理...
+} catch (\Exception $e) {
+    // 处理其他异常
+}
 ```
 
 ## 文档说明

@@ -6,8 +6,7 @@ namespace ClickHouseQuery\Database\Connection;
 
 use ClickHouseQuery\Exceptions\ClickHouseQueryException;
 use ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
-use ClickHouseQuery\Adapters\HyperfAdapter;
-use ClickHouseQuery\Adapters\ThinkPHPAdapter;
+use ClickHouseQuery\Database\Factories\AdapterFactory;
 use Throwable;
 
 /**
@@ -58,7 +57,8 @@ class ClickHouseConnection
         $this->poolName = $config['pool_name'] ?? config('clickhouse.pool_name', 'clickhouse');
         
         // 创建适配器
-        $this->adapter = $this->createAdapter($config);
+        $adapterFactory = new AdapterFactory();
+        $this->adapter = $adapterFactory->create($config, $this->poolName);
         
         // 从适配器获取配置
         $this->maxRunningProcesses = $config['max_running_processes'] ?? 
@@ -74,26 +74,6 @@ class ClickHouseConnection
             $this->adapter->getConfig('connection_control.wait_max_microseconds', 1000000);
         
         $this->initGlobalConditions();
-    }
-    
-    /**
-     * 创建适配的数据库连接
-     */
-    private function createAdapter(array $config): ConnectionAdapterInterface
-    {
-        // 优先使用配置中指定的适配器
-        if (isset($config['adapter']) && class_exists($config['adapter'])) {
-            $adapterClass = $config['adapter'];
-            return new $adapterClass($this->poolName);
-        }
-        
-        // 尝试从全局配置中获取适配器
-        $configAdapter = config('clickhouse.adapter');
-        if (!empty($configAdapter) && class_exists($configAdapter)) {
-            return new $configAdapter($this->poolName);
-        }
-        
-        throw new ClickHouseQueryException('请在配置中指定框架数据库适配器(adapter)参数');
     }
     
     /**

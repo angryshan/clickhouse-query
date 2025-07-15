@@ -19,12 +19,12 @@ class ThinkPHPAdapter implements ConnectionAdapterInterface
     /**
      * @var ConnectionInterface
      */
-    private $connection;
+    private ConnectionInterface $connection;
     
     /**
      * @var string
      */
-    private $poolName;
+    private string $poolName;
     
     public function __construct(string $poolName = 'clickhouse')
     {

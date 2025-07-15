@@ -18,12 +18,12 @@ class HyperfAdapter implements ConnectionAdapterInterface
     /**
      * @var DB
      */
-    private $connection;
+    private DB $connection;
     
     /**
      * @var string
      */
-    private $poolName;
+    private string $poolName;
     
     public function __construct(string $poolName = 'clickhouse')
     {

@@ -13,6 +13,11 @@
             "ClickHouseQuery\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "ClickHouseQueryTest\\": "test/"
+        }
+    },
     "require": {
         "php": ">=7.4"
     },

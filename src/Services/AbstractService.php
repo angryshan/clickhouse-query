@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Services;
+namespace TxAdmin\ClickHouseQuery\Services;
 
-use ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
-use ClickHouseQuery\Exceptions\ClickHouseQueryException;
+use TxAdmin\ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
+use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
 
 /**
  * 查询服务抽象基类
  * 提供基础查询功能，业务逻辑应在子类中实现
  * 
- * @package ClickHouseQuery\Services
+ * @package TxAdmin\ClickHouseQuery\Services
  * @author angryshan
  */
 abstract class AbstractService

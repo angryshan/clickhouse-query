@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Database\QueryBuilder;
+namespace TxAdmin\ClickHouseQuery\Database\QueryBuilder;
 
-use ClickHouseQuery\Database\Connection\ClickHouseConnection;
-use ClickHouseQuery\Database\QueryBuilder\Traits\WhereBuilderTrait;
-use ClickHouseQuery\Database\QueryBuilder\Traits\WithFromBuilderTrait;
-use ClickHouseQuery\Exceptions\ClickHouseQueryException;
+use TxAdmin\ClickHouseQuery\Database\Connection\ClickHouseConnection;
+use TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits\WhereBuilderTrait;
+use TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits\WithFromBuilderTrait;
+use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
 
 /**
  * 构建ClickHouse查询
- * @package ClickHouseQuery\Database\QueryBuilder
+ * @package TxAdmin\ClickHouseQuery\Database\QueryBuilder
  * @author angryshan
  */
 class ClickHouseQueryBuilder

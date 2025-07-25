@@ -1,5 +1,5 @@
 {
-    "name": "angryshan/clickhouse-query",
+    "name": "tx-admin/clickhouse-query",
     "description": "ClickHouse查询构建器，基于PDO+MySQL协议连接，提供链式API的ClickHouse查询解决方案",
     "license": "MIT",
     "authors": [
@@ -10,7 +10,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "ClickHouseQuery\\": "src/"
+            "TxAdmin\\ClickHouseQuery\\": "src/"
         }
     },
     "require": {
@@ -35,7 +35,7 @@
     },
     "extra": {
         "hyperf": {
-            "config": "ClickHouseQuery\\ConfigProvider"
+            "config": "TxAdmin\\ClickHouseQuery\\ConfigProvider"
         },
         "think": {
             "config": {

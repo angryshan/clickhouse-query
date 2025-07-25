@@ -3,14 +3,14 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Adapters;
+namespace TxAdmin\ClickHouseQuery\Adapters;
 
 use Hyperf\DB\DB;
-use ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
+use TxAdmin\ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
 
 /**
  * Hyperf适配器
- * @package ClickHouseQuery\Adapter
+ * @package TxAdmin\ClickHouseQuery\Adapter
  * @author angryshan
  */
 class HyperfAdapter implements ConnectionAdapterInterface

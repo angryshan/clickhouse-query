@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Tables;
+namespace TxAdmin\ClickHouseQuery\Tables;
 
-use ClickHouseQuery\Interfaces\TableInterface;
+use TxAdmin\ClickHouseQuery\Interfaces\TableInterface;
 
 /**
  * 抽象表类
- * @package ClickHouseQuery\Tables
+ * @package TxAdmin\ClickHouseQuery\Tables
  * @author angryshan
  */
 abstract class AbstractTable implements TableInterface

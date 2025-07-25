@@ -16,7 +16,7 @@
 ## 安装
 
 ```bash
-composer require angryshan/clickhouse-query -vvv
+composer require tx-admin/clickhouse-query -vvv
 ```
 
 ## 配置文件
@@ -24,7 +24,7 @@ composer require angryshan/clickhouse-query -vvv
 发布配置文件`config/clickhouse.php`
 
 ```bash
-php bin/hyperf.php vendor:publish angryshan/clickhouse-query
+php bin/hyperf.php vendor:publish tx-admin/clickhouse-query
 php think vendor:publish
 ```
 
@@ -57,7 +57,7 @@ return [
     ],
     
     // 自定义适配器类
-    'adapter' => \ClickHouseQuery\Adapters\ThinkPHPAdapter::class, // 或 \ClickHouseQuery\Adapters\HyperfAdapter::class
+    'adapter' => \TxAdmin\ClickHouseQuery\Adapters\ThinkPHPAdapter::class, // 或  \TxAdmin\ClickHouseQuery\Adapters\HyperfAdapter::class
 ]; 
 ```
 
@@ -66,8 +66,8 @@ return [
 ### 基础查询
 
 ```php
-use ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
-use ClickHouseQuery\Tables\AbstractTable;
+use  \TxAdminClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
+use  \TxAdminClickHouseQuery\Tables\AbstractTable;
 
 // 定义表
 class BusinessTable extends AbstractTable
@@ -143,8 +143,8 @@ ClickHouse支持两种主要的连接协议：
 ```
 
 框架兼容性说明：
-- **ThinkPHP**: 使用`\ClickHouseQuery\Adapters\ThinkPHPAdapter`适配器
-- **Hyperf**: 使用`\ClickHouseQuery\Adapters\HyperfAdapter`适配器
+- **ThinkPHP**: 使用`\TxAdmin\ClickHouseQuery\Adapters\ThinkPHPAdapter`适配器
+- **Hyperf**: 使用`\TxAdmin\ClickHouseQuery\Adapters\HyperfAdapter`适配器
 
 **适配器选择策略**:
 1. 优先使用配置中显式指定的适配器

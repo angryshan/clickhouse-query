@@ -24,9 +24,9 @@ test/
 ```php
 <?php
 
-namespace ClickHouseQuery\Test\Tables;
+namespace TxAdmin\ClickHouseQuery\Test\Tables;
 
-use ClickHouseQuery\Tables\AbstractTable;
+use TxAdmin\ClickHouseQuery\Tables\AbstractTable;
 
 class TestTable extends AbstractTable
 {
@@ -47,9 +47,9 @@ class TestTable extends AbstractTable
 ```php
 <?php
 
-namespace ClickHouseQuery\Test\Services;
+namespace TxAdmin\ClickHouseQuery\Test\Services;
 
-use ClickHouseQuery\Test\Tables\TestTable;
+use TxAdmin\ClickHouseQuery\Test\Tables\TestTable;
 
 class TestService extends AbstractService
 {
@@ -75,7 +75,7 @@ class TestService extends AbstractService
 <?php
 
 // 创建服务实例
-$testService = new \ClickHouseQuery\Test\Services\TestService();
+$testService = new \TxAdmin\ClickHouseQuery\Test\Services\TestService();
 
 // 执行查询获取数据
 try {
@@ -91,7 +91,7 @@ try {
 ```php
 <?php
 
-$testService = new \ClickHouseQuery\Test\Services\TestService();
+$testService = new \TxAdmin\ClickHouseQuery\Test\Services\TestService();
 
 // 扩展TestService添加自定义查询方法
 class ExtendedTestService extends \ClickHouseQuery\Test\Services\TestService 

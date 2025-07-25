@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Database\QueryBuilder\Traits;
+namespace TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits;
 
 /**
  * WITH FROM 构建器
- * @package ClickHouseQuery\Database\QueryBuilder\Traits
+ * @package TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits
  * @author angryshan
  */
 trait WithFromBuilderTrait

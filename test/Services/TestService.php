@@ -12,9 +12,9 @@ class TestService extends AbstractService
         $this->table = TestTable::TABLE_NAME;
     }
 
-    public function getTestData(): array
+    public function getTestSql(): string
     {
-        return $this->query()->select(['id', 'name'])->get();
+        return $this->query()->select(['id', 'name'])->toSql();
     }
 
 } 

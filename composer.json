@@ -13,6 +13,11 @@
             "ClickHouseQuery\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "ClickHouseQueryTest\\": "test/"
+        }
+    },
     "require": {
         "php": ">=7.4"
     },
@@ -23,6 +28,7 @@
     "suggest": {
         "hyperf/db": "使用Hyperf框架时需要",
         "hyperf/utils": "使用Hyperf框架时需要",
+        "hyperf/http-server": "使用Hyperf框架时需要",
         "topthink/framework": "使用ThinkPHP框架时需要"
     },
     "scripts": {

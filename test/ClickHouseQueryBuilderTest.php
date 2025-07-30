@@ -3,7 +3,7 @@
 namespace ClickHouseQueryTest;
 
 use PHPUnit\Framework\TestCase;
-use TxAdmin\ClickHouseQuery\Test\Services\TestService;
+use ClickHouseQueryTest\Services\TestService;
 
 class ClickHouseQueryBuilderTest extends TestCase
 {

@@ -32,8 +32,9 @@
         "topthink/framework": "使用ThinkPHP框架时需要"
     },
     "scripts": {
-        "test": "phpunit -c phpunit.xml --colors=always",
-        "cs-fix": "./vendor/bin/php-cs-fixer fix"
+        "test": "phpunit",
+        "cs-fix": "php-cs-fixer fix src/",
+        "cs-check": "php-cs-fixer fix src/ --dry-run --diff"
     },
     "config": {
         "sort-packages": true

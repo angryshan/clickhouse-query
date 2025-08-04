@@ -29,11 +29,7 @@ return (new \PhpCsFixer\Config())
                 'declare',
             ],
         ],
-        'general_phpdoc_annotation_remove' => [
-            'annotations' => [
-                'author',
-            ],
-        ],
+        
         'ordered_imports' => [
             'imports_order' => [
                 'class', 'function', 'const',
@@ -64,8 +60,7 @@ return (new \PhpCsFixer\Config())
         'linebreak_after_opening_tag' => true,
         'lowercase_static_reference' => true,
         'no_useless_else' => true,
-        'no_unused_imports' => true,
-        'not_operator_with_successor_space' => true,
+        'no_unused_imports' => false,  // 禁用，避免错误删除类型声明用的import
         'not_operator_with_space' => false,
         'ordered_class_elements' => true,
         'php_unit_strict' => false,
@@ -73,13 +68,22 @@ return (new \PhpCsFixer\Config())
         'single_quote' => true,
         'standardize_not_equals' => true,
         'multiline_comment_opening_closing' => true,
+        
+        // 禁用过度删除PHPDoc的规则
+        'no_superfluous_phpdoc_tags' => false,        // 保留@param、@return等注释
+        'phpdoc_summary' => false,                     // 不强制注释末尾加句号
+        'phpdoc_no_package' => false,                  // 保留@package标签
+        'general_phpdoc_annotation_remove' => false,  // 不删除任何PHPDoc注释
+        'not_operator_with_successor_space' => false, // 不在!后面强制加空格
     ])
     ->setFinder(
         \PhpCsFixer\Finder::create()
+            ->exclude('test')           // 排除测试文件
             ->exclude('public')
             ->exclude('runtime')
             ->exclude('vendor')
-            ->in(__DIR__)
+            ->notPath('publish/')       // 排除发布配置
+            ->in(__DIR__ . '/src')      // 只处理src目录
     )
     ->setUsingCache(false)
     ;

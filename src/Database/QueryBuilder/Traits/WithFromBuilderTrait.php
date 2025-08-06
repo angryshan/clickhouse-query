@@ -29,7 +29,7 @@ trait WithFromBuilderTrait
     public function with(string $alias, callable $callback): self
     {
         // 创建新的查询构建器实例
-        $subQuery = new static($this->table);
+        $subQuery = new static($this->table, $this->config);
         
         // 执行回调，构建子查询
         $callback($subQuery);

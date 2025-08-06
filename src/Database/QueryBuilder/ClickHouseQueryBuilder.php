@@ -26,6 +26,8 @@ class ClickHouseQueryBuilder
     private int $offset = 0;
     private array $havingConditions = [];
 
+    private array $config = [];
+
     private string $table;
     private ClickHouseConnection $connection;
 
@@ -42,7 +44,8 @@ class ClickHouseQueryBuilder
     public function __construct(string $table, array $config = [])
     {
         $this->table = $table;
-        $this->connection = new ClickHouseConnection($config);
+        $this->config = $config;
+        $this->connection = new ClickHouseConnection($this->config);
     }
 
     /**

@@ -82,8 +82,10 @@ return (new \PhpCsFixer\Config())
             ->exclude('public')
             ->exclude('runtime')
             ->exclude('vendor')
+            ->notName('example.php')    // 排除示例文件
             ->notPath('publish/')       // 排除发布配置
             ->in(__DIR__ . '/src')      // 只处理src目录
     )
+    ->setLineEnding("\r\n")
     ->setUsingCache(false)
     ;

@@ -37,7 +37,7 @@ class AdapterFactory
             return new $adapterClass($poolName);
         }
         
-        $configAdapter = config('clickhouse.adapter');
+        $configAdapter = config('tx_clickhouse_query.adapter');
         if (!empty($configAdapter) && class_exists($configAdapter)) {
             return new $configAdapter($poolName);
         }

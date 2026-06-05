@@ -46,7 +46,7 @@ class ThinkPHPAdapter implements ConnectionAdapterInterface
     public function getConfig(string $key, $default = null)
     {
         // 适配ThinkPHP的配置系统
-        return config("database.connections.{$this->poolName}.{$key}", $default);
+        return config("tx_clickhouse_query.{$key}", $default);
     }
 
     /**

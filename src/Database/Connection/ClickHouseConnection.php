@@ -54,7 +54,7 @@ class ClickHouseConnection
     public function __construct(array $config = [])
     {
         // 设置连接池名称
-        $this->poolName = $config['pool_name'] ?? config('clickhouse.pool_name', 'clickhouse');
+        $this->poolName = $config['pool_name'] ?? config('tx_clickhouse_query.pool_name', 'clickhouse');
         
         // 创建适配器
         $adapterFactory = new AdapterFactory();

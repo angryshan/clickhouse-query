@@ -21,14 +21,14 @@ composer require angryshan/clickhouse-query -vvv
 
 ## 配置文件
 
-发布配置文件`config/clickhouse.php`
+发布配置文件`config/tx_clickhouse_query.php`
 
 ```bash
 php bin/hyperf.php vendor:publish angryshan/clickhouse-query
 php think vendor:publish
 ```
 
-或者复制以下内容到`config/clickhouse.php`
+或者复制以下内容到`config/tx_clickhouse_query.php`
 ```
 <?php
 
@@ -158,7 +158,7 @@ ClickHouse支持两种主要的连接协议：
 1. 创建自定义适配器类实现`ConnectionAdapterInterface`接口
 2. 在配置中指定自定义适配器：
 ```php
-// 方法一：在clickhouse.php配置文件中指定
+// 方法一：在tx_clickhouse_query.php配置文件中指定
 return [
     // 其他配置...
     'adapter' => \Your\Custom\AdapterClass::class,

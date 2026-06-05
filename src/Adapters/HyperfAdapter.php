@@ -44,7 +44,7 @@ class HyperfAdapter implements ConnectionAdapterInterface
      */
     public function getConfig(string $key, $default = null)
     {
-        return config("clickhouse.{$key}", $default);
+        return config("tx_clickhouse_query.{$key}", $default);
     }
 
     /**

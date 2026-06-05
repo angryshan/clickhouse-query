@@ -45,7 +45,7 @@
         },
         "think": {
             "config": {
-                "clickhouse": "publish/clickhouse.php"
+                "tx_clickhouse_query": "publish/tx_clickhouse_query.php"
             }
         }
     }

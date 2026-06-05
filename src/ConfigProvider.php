@@ -31,8 +31,8 @@ class ConfigProvider
                 [
                     'id' => 'config',
                     'description' => 'ClickHouse Query配置文件',
-                    'source' => __DIR__ . '/../publish/clickhouse.php',
-                    'destination' => BASE_PATH . '/config/autoload/clickhouse.php',
+                    'source' => __DIR__ . '/../publish/tx_clickhouse_query.php',
+                    'destination' => BASE_PATH . '/config/autoload/tx_clickhouse_query.php',
                 ],
             ],
         ];

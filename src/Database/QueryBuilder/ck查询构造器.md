@@ -220,7 +220,105 @@ $query = new ClickHouseQueryBuilder('table_name', [
 ]);
 ```
 
-## 6. 注意事项
+## 6. 时间分区自动优化
+
+### 6.1 功能说明
+
+当 ClickHouse 表按日期分区，但查询使用时间戳字段时，自动添加日期条件实现分区裁剪，提升性能 100-1000 倍。
+
+### 6.2 适用场景
+
+```sql
+-- 表结构
+CREATE TABLE logs (
+    log_time UInt64,                        -- 时间戳
+    log_date Date DEFAULT toDate(log_time), -- 日期
+    ...
+)
+PARTITION BY toYYYYMMDD(log_date);  -- 按日期分区
+```
+
+### 6.3 自动优化示例
+
+```php
+// 原始查询
+$result = $query->where([
+    ['log_time', '>=', 1717516800]  // 查询时间戳
+])->get();
+
+// 自动生成 SQL
+// SELECT * FROM logs 
+// WHERE `log_time` >= 1717516800 
+//   AND `log_date` >= '2024-06-05'  ✅ 自动添加
+```
+
+### 6.4 支持的操作符
+
+```php
+// 大于
+$query->where([['log_time', '>', 1717516800]]);
+// 自动添加: log_date >= '2024-06-05'
+
+// 大于等于
+$query->where([['log_time', '>=', 1717516800]]);
+// 自动添加: log_date >= '2024-06-05'
+
+// 小于
+$query->where([['log_time', '<', 1717603200]]);
+// 自动添加: log_date <= '2024-06-06'
+
+// 小于等于
+$query->where([['log_time', '<=', 1717603200]]);
+// 自动添加: log_date <= '2024-06-06'
+
+// 等于
+$query->where([['log_time', '=', 1717560000]]);
+// 自动添加: log_date = '2024-06-05'
+
+// BETWEEN (范围查询)
+$query->where([['log_time', 'BETWEEN', [1717516800, 1717603200]]]);
+// 自动添加: log_date BETWEEN '2024-06-05' AND '2024-06-06'
+```
+
+### 6.5 配置说明
+
+```php
+// config/tx_clickhouse_query.php
+'time_partition_optimization' => [
+    'enabled' => true,  // 是否启用
+    
+    'field_mapping' => [
+        // 通用配置
+        'default' => [
+            'log_time' => 'log_date',
+            'create_time' => 'log_date',
+        ],
+        
+        // 表特定配置
+        'tables' => [
+            'client_monitor_log' => [
+                'log_time' => 'log_date',
+                'timestamp_type' => 'seconds',  // 秒级
+            ],
+            'server_monitor_log' => [
+                'log_time' => 'log_date',
+                'timestamp_type' => 'milliseconds',  // 毫秒级
+            ],
+        ],
+    ],
+]
+```
+
+### 6.6 注意事项
+
+1. ✅ 自动识别秒级/毫秒级时间戳
+2. ✅ 避免重复添加（智能检测已有条件）
+3. ✅ 支持括号、复杂条件
+4. ✅ 支持 BETWEEN 范围查询（自动转换为 BETWEEN 日期条件）
+5. ❌ 不支持 IN 操作符
+6. ❌ 如果表已经用 `PARTITION BY toYYYYMMDD(fromUnixTimestamp(timestamp_field))`，则不需要此优化
+
+## 7. 注意事项
 
 1. 查询执行后会自动重置状态
 2. 字符串值会自动添加引号和转义
@@ -231,3 +329,4 @@ $query = new ClickHouseQueryBuilder('table_name', [
 7. withoutGlobalConditions() 只对当前查询有效
 8. getPageData() 方法会自动处理分页参数和计算总记录数
 9. 导出功能可通过 getPageData(['is_export' => true]) 实现
+10. 时间分区优化默认启用，可在配置中关闭

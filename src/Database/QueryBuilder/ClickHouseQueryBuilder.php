@@ -365,7 +365,7 @@ class ClickHouseQueryBuilder
         $this->deduplicateConditions();
 
         $conditions = [];
-        if ($this->useGlobalConditions && empty($this->with)) {
+        if ($this->useGlobalConditions && empty($this->from)) {
             $globalWhere = $this->connection->getGlobalWhere();
             if (!empty($globalWhere)) {
                 $conditions[] = $globalWhere;

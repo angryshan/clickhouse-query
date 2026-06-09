@@ -45,7 +45,16 @@ class ClickHouseConnection
      */
     private int $waitMaxMicroseconds = 1000000;
 
+    /**
+     * 全局WHERE条件
+     */
     private string $globalWhere = '';
+
+    /**
+     * 时间分区优化配置
+     * @var array
+     */
+    private array $timePartitionOptimization = [];
     private ConnectionAdapterInterface $adapter;
 
     /**
@@ -73,7 +82,15 @@ class ClickHouseConnection
         $this->waitMaxMicroseconds = $config['wait_max_microseconds'] ?? 
             $this->adapter->getConfig('connection_control.wait_max_microseconds', 1000000);
         
-        $this->initGlobalConditions();
+        $this->initGlobalConditions($config);
+
+        // 初始化时间分区优化
+        $this->timePartitionOptimization = $config['time_partition_optimization'] ?? 
+            $this->adapter->getConfig('time_partition_optimization', [
+                'enabled' => false,
+                'field_mapping' => [],
+                'timestamp_type' => 'seconds',
+            ]);
     }
     
     /**
@@ -126,6 +143,14 @@ class ClickHouseConnection
     }
 
     /**
+     * 获取时间分区优化配置
+     */
+    public function getTimePartitionOptimization(): array
+    {
+        return $this->timePartitionOptimization;
+    }
+
+    /**
      * 等待可用连接
      * @throws ClickHouseQueryException
      */
@@ -163,12 +188,12 @@ class ClickHouseConnection
     /**
      * 初始化全局查询条件
      */
-    private function initGlobalConditions(): void
+    private function initGlobalConditions(array $config): void
     {
         $conditions = [];
 
         // 全局条件从配置中读取
-        $globalConditions = $this->adapter->getConfig('global_conditions', []);
+        $globalConditions = $config['global_conditions'] ?? $this->adapter->getConfig('global_conditions', []);
         foreach ($globalConditions as $field => $value) {
             $conditions[] = "{$field} = {$value}";
         }

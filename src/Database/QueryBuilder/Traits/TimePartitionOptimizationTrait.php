@@ -157,7 +157,7 @@ trait TimePartitionOptimizationTrait
      */
     protected function getOptimizationConfig(string $key, $default = null)
     {
-        return $this->connection->getAdapter()->getConfig("time_partition_optimization.{$key}", $default);
+        return $this->connection->getTimePartitionOptimization()[$key] ?? $default;
     }
 
     /**

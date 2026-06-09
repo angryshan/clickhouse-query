@@ -7,6 +7,7 @@ namespace ClickHouseQuery\Database\QueryBuilder;
 use ClickHouseQuery\Database\Connection\ClickHouseConnection;
 use ClickHouseQuery\Database\QueryBuilder\Traits\TimePartitionOptimizationTrait;
 use ClickHouseQuery\Database\QueryBuilder\Traits\WhereBuilderTrait;
+use ClickHouseQuery\Database\QueryBuilder\Traits\WhereDeduplicationTrait;
 use ClickHouseQuery\Database\QueryBuilder\Traits\WithFromBuilderTrait;
 use ClickHouseQuery\Exceptions\ClickHouseQueryException;
 
@@ -20,6 +21,7 @@ class ClickHouseQueryBuilder
     use WhereBuilderTrait;
     use WithFromBuilderTrait;
     use TimePartitionOptimizationTrait;
+    use WhereDeduplicationTrait;
 
     private array $fields = [];
     private array $groupBy = [];
@@ -359,8 +361,8 @@ class ClickHouseQueryBuilder
      */
     private function buildWhere(): string
     {
-        // 🔥 应用时间分区优化（统一在这里处理）- 必须在 getConditions() 之前
         $this->applyTimePartitionOptimization();
+        $this->deduplicateConditions();
 
         $conditions = [];
         if ($this->useGlobalConditions && empty($this->with)) {

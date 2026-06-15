@@ -124,7 +124,10 @@ trait WhereBuilderTrait
         $groupConditions = $builder->getConditions();
         
         if (!empty($groupConditions)) {
-            $this->conditions[$type][] = '(' . implode(' OR ', $groupConditions) . ')';
+            $inner = $groupConditions[0];
+            // getConditions() 对 OR-only 多条件或 AND+OR 混合情况会自带外层括号
+            // 若已有外层括号则直接使用，避免双重括号 ((...))
+            $this->conditions[$type][] = str_starts_with($inner, '(') ? $inner : "({$inner})";
         }
         
         return $this;

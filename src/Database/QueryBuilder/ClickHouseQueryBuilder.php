@@ -7,7 +7,6 @@ namespace ClickHouseQuery\Database\QueryBuilder;
 use ClickHouseQuery\Database\Connection\ClickHouseConnection;
 use ClickHouseQuery\Database\QueryBuilder\Traits\TimePartitionOptimizationTrait;
 use ClickHouseQuery\Database\QueryBuilder\Traits\WhereBuilderTrait;
-use ClickHouseQuery\Database\QueryBuilder\Traits\WhereDeduplicationTrait;
 use ClickHouseQuery\Database\QueryBuilder\Traits\WithFromBuilderTrait;
 use ClickHouseQuery\Exceptions\ClickHouseQueryException;
 
@@ -21,7 +20,7 @@ class ClickHouseQueryBuilder
     use WhereBuilderTrait;
     use WithFromBuilderTrait;
     use TimePartitionOptimizationTrait;
-    use WhereDeduplicationTrait;
+    use PaginationTrait;
 
     private array $fields = [];
     private array $groupBy = [];
@@ -39,6 +38,11 @@ class ClickHouseQueryBuilder
      * 是否使用WHERE全局条件 默认为true
      */
     private bool $useGlobalConditions = true;
+
+    /**
+     * 分区优化是否已执行（防止 toSql() 多次调用重复追加 conditions）
+     */
+    private bool $conditionsOptimized = false;
 
     /**
      * 初始化查询构建器
@@ -166,6 +170,8 @@ class ClickHouseQueryBuilder
      */
     public function first(bool $useConnectionControl = false): array
     {
+        // 强制 LIMIT 1，避免全表扫描返回大结果集
+        $this->limit = 1;
         $sql = $this->buildQuery();
         $result = $this->connection->execute($sql, $useConnectionControl);
         $this->reset();
@@ -361,8 +367,11 @@ class ClickHouseQueryBuilder
      */
     private function buildWhere(): string
     {
-        $this->applyTimePartitionOptimization();
-        $this->deduplicateConditions();
+        // 分区优化只执行一次，防止 toSql() 多次调用重复追加 log_date 条件
+        if (!$this->conditionsOptimized) {
+            $this->applyTimePartitionOptimization();
+            $this->conditionsOptimized = true;
+        }
 
         $conditions = [];
         if ($this->useGlobalConditions && empty($this->from)) {
@@ -449,6 +458,8 @@ class ClickHouseQueryBuilder
         $this->orderBy = [];
         $this->limit = 0;
         $this->offset = 0;
+        $this->useGlobalConditions = true;
+        $this->conditionsOptimized = false;
         $this->resetWithFrom();
     }
 

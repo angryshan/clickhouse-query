@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ClickHouseQuery\Database\QueryBuilder;
 
 use ClickHouseQuery\Database\Connection\ClickHouseConnection;
+use ClickHouseQuery\Database\QueryBuilder\Traits\PaginationTrait;
 use ClickHouseQuery\Database\QueryBuilder\Traits\TimePartitionOptimizationTrait;
 use ClickHouseQuery\Database\QueryBuilder\Traits\WhereBuilderTrait;
 use ClickHouseQuery\Database\QueryBuilder\Traits\WithFromBuilderTrait;
@@ -54,6 +55,11 @@ class ClickHouseQueryBuilder
         $this->table = $table;
         $this->config = $config;
         $this->connection = new ClickHouseConnection($this->config);
+    }
+
+    public function getConnection(): ClickHouseConnection
+    {
+        return $this->connection;
     }
 
     /**
@@ -257,80 +263,6 @@ class ClickHouseQueryBuilder
     {
         $this->useGlobalConditions = true;
         return $this;
-    }
-
-    /**
-     * 获取分页数据
-     *
-     * @param array $params 请求参数数组
-     * @param bool $useWithClause 是否使用WITH子句优化计数查询
-     * @param string $countField 计数字段
-     * @param bool $useConnectionControl 是否使用连接控制
-     * @return array 分页结果
-     * @throws ClickHouseQueryException
-     */
-    public function getPageData(
-        array $params = [],
-        bool $useWithClause = true,
-        string $countField = '',
-        bool $useConnectionControl = false
-    ): array {
-        // 如果没有提供参数，尝试从请求中获取
-        if (empty($params)) {
-            $params = $this->getRequestParams();
-        }
-
-        // 解析分页参数
-        $isExport = (bool)($params['is_export'] ?? false);
-        $page = max(1, (int)($params['page'] ?? 1));
-        $pageSize = max(1, (int)($params['pageSize'] ?? 10));
-
-        // 导出模式 - 返回所有数据
-        if ($isExport) {
-            return $this->get($useConnectionControl);
-        }
-
-        // 计算总记录数
-        if ($useWithClause) {
-            // 使用 WITH 子句优化计数查询
-            $countQuery = new self($this->table);
-            $countQuery = $countQuery->with('allData', function (&$query) {
-                $query = clone $this;
-                $query->orderBy = []; // 计数查询不需要排序
-            });
-            $total = $countQuery->from('allData')->count($countField);
-        } else {
-            // 标准计数查询
-            $countQuery = clone $this;
-            $total = $countQuery->count($countField);
-        }
-
-        // 获取当前页数据
-        $data = $this->limit($pageSize)
-            ->offset(($page - 1) * $pageSize)
-            ->get($useConnectionControl);
-
-        // 计算最后一页
-        $lastPage = $total > 0 ? ceil($total / $pageSize) : 1;
-
-        // 返回标准化的分页结果
-        return [
-            'total' => $total,
-            'per_page' => $pageSize,
-            'current_page' => $page,
-            'last_page' => $lastPage,
-            'data' => $data,
-        ];
-    }
-
-    /**
-     * 获取请求参数
-     *
-     * @return array 请求参数
-     */
-    private function getRequestParams(): array
-    {
-        return $this->connection->getAdapter()->getRequestParams();
     }
 
     /**

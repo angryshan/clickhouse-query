@@ -65,6 +65,9 @@ $result = $query
 ```
 
 ### 2.3 分页
+
+#### 组件层（拼 SQL）
+
 ```php
 // 基本分页
 $result = $query->limit(10)->offset(20)->get();
@@ -72,8 +75,13 @@ $result = $query->limit(10)->offset(20)->get();
 // 获取总数
 $total = $query->count();
 
-// 高级分页（自动处理分页参数）
-$pageData = $query->getPageData();
+// 推荐：纯分页（调用方显式传入 page、是否 WITH 计数）
+$pageData = $query->paginate(
+    1,      // page
+    10,     // perPage
+    false,  // wrapCountWithClause：是否用 WITH 子查询包装计数
+    ''      // countField
+);
 // 返回格式:
 // [
 //     'total' => 100,         // 总记录数
@@ -83,18 +91,62 @@ $pageData = $query->getPageData();
 //     'data' => [...]         // 当前页数据
 // ]
 
+// CTE 查询（with + from）需包装计数
+$pageData = $query
+    ->with('Stats', function ($q) { /* ... */ })
+    ->from('Stats')
+    ->paginate(1, 10, true);
+```
+
+> `paginate()` 第三个参数 `wrapCountWithClause` 由**调用方决定**，组件不做自动判断。
+
+#### 兼容入口 getPageData()（存量代码）
+
+```php
+// 从 HTTP 请求读取 page / pageSize（params 为空时）
+$pageData = $query->getPageData();
+
 // 自定义分页参数
 $pageData = $query->getPageData([
     'page' => 2,
-    'pageSize' => 15
+    'pageSize' => 15,
 ]);
 
-// 优化计数查询
+// 强制 WITH 计数包装
 $pageData = $query->getPageData([], true, 'id');
 
-// 导出全部数据（忽略分页）
+// 导出全部数据（返回裸数组，非分页结构）
 $allData = $query->getPageData(['is_export' => true]);
 ```
+
+> 新代码请用 `paginate()` 或 `AbstractService::paginate()`，勿再扩展 `getPageData()`。
+
+#### 服务层（业务入口，推荐）
+
+继承 `AbstractService` 后使用 `paginate()`，统一处理：请求参数、pageSize 上限、偏移校验。
+
+```php
+class LogService extends AbstractService
+{
+    public function list(array $where): array
+    {
+        $query = $this->query()->where($where)->select(['*']);
+
+        // 列表：分页结构；is_export=true 时返回裸数组（与 getPageData 一致）
+        return $this->paginate($query);
+    }
+}
+```
+
+返回约定：
+
+| 场景 | 返回 |
+|------|------|
+| 列表 | `{total, per_page, current_page, last_page, data}` |
+| `is_export=true` | 裸二维数组 `[...]` |
+
+`$useWithClause` 三态：`null` 有 `from` 才 WITH 计数；`true` 强制 WITH；`false` 强制直接 count。
+
 
 ### 2.4 统计
 ```php
@@ -327,6 +379,6 @@ $query->where([['log_time', 'BETWEEN', [1717516800, 1717603200]]]);
 5. 建议使用连接控制避免并发查询过多
 6. 复杂查询建议先使用 toSql() 检查生成的SQL
 7. withoutGlobalConditions() 只对当前查询有效
-8. getPageData() 方法会自动处理分页参数和计算总记录数
-9. 导出功能可通过 getPageData(['is_export' => true]) 实现
+8. 分页：`paginate()` 为组件推荐入口；`getPageData()` 为兼容存量；业务侧推荐 `AbstractService::paginate()`
+9. 导出：`is_export=true` 时 `getPageData()` 与 `AbstractService::paginate()` 均返回裸数组，非分页结构
 10. 时间分区优化默认启用，可在配置中关闭

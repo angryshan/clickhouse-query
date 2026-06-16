@@ -75,6 +75,14 @@ trait WithFromBuilderTrait
     }
 
     /**
+     * 获取自定义 FROM（CTE 别名或覆盖物理表）
+     */
+    public function getFrom(): string
+    {
+        return $this->from;
+    }
+
+    /**
      * 重置状态
      */
     protected function resetWithFrom(): void

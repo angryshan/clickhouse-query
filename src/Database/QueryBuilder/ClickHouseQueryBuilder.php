@@ -49,17 +49,27 @@ class ClickHouseQueryBuilder
      * 初始化查询构建器
      *
      * @param string $table 表名
+     * @param array $config 配置
+     * @param ClickHouseConnection|null $connection 传入则共用连接（newQuery 场景）
      */
-    public function __construct(string $table, array $config = [])
+    public function __construct(string $table, array $config = [], ?ClickHouseConnection $connection = null)
     {
         $this->table = $table;
         $this->config = $config;
-        $this->connection = new ClickHouseConnection($this->config);
+        $this->connection = $connection ?? new ClickHouseConnection($this->config);
     }
 
     public function getConnection(): ClickHouseConnection
     {
         return $this->connection;
+    }
+
+    /**
+     * 创建同表、同配置的新查询实例（共用 connection，不含当前 where/limit/with 等条件）
+     */
+    public function newQuery(): self
+    {
+        return new self($this->table, $this->config, $this->connection);
     }
 
     /**
@@ -221,7 +231,7 @@ class ClickHouseQueryBuilder
         $this->orderBy = $originalOrderBy;
 
         // 返回统计结果
-        return isset($result[0]['count']) ? (int)array_sum(array_column($result, 'count')) : 0;
+        return (int)($result[0]['count'] ?? 0);
     }
 
     /**

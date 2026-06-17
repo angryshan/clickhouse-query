@@ -28,8 +28,8 @@ trait WithFromBuilderTrait
      */
     public function with(string $alias, callable $callback): self
     {
-        // 创建新的查询构建器实例
-        $subQuery = new static($this->table, $this->config);
+        // 创建新的查询构建器实例（共用 connection）
+        $subQuery = new static($this->table, $this->config, $this->connection);
         
         // 执行回调，构建子查询
         $callback($subQuery);

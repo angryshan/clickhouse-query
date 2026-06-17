@@ -108,15 +108,39 @@ trait PaginationTrait
     ): int {
         if ($wrapCountWithClause) {
             $cteAlias = $this->paginationCountCteAlias();
-            $countQuery = new self($this->table, $this->config);
-            $countQuery = $countQuery->with($cteAlias, function (&$query) {
+            $countQuery = $this->newQuery()->with($cteAlias, function (&$query) {
                 $query = $this->cloneForCount();
             });
 
             return $countQuery->from($cteAlias)->count($countField, $useConnectionControl);
         }
 
+        if ($this->needsAggregateSubqueryForPaginationCount()) {
+            $subSql = $this->cloneForCount()->buildQuery();
+            $alias = $this->paginationAggregateSubqueryAlias();
+
+            return $this->newQuery()
+                ->from("({$subSql}) AS {$alias}")
+                ->count($countField, $useConnectionControl);
+            }
+
         return $this->cloneForCount()->count($countField, $useConnectionControl);
+    }
+
+    /**
+     * GROUP BY / HAVING 场景需对分组结果包子查询再 count（对标 Hyperf runPaginationCountQuery / TP count+group）
+     */
+    private function needsAggregateSubqueryForPaginationCount(): bool
+    {
+        return !empty($this->groupBy) || !empty($this->havingConditions);
+    }
+
+    /**
+     * 分页分组计数子查询别名（组件内部保留，应用层勿用 _ckqb_ 前缀）
+     */
+    private function paginationAggregateSubqueryAlias(): string
+    {
+        return '_ckqb_pagination_aggregate_';
     }
 
     /**

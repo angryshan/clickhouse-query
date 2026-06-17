@@ -163,7 +163,7 @@ class ClickHouseQueryBuilder
     }
 
     /**
-     * 执行查询并获取结果
+     * 执行查询并获取结果（执行后保留构建器状态，可继续链式调用）
      *
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array 查询结果
@@ -172,13 +172,12 @@ class ClickHouseQueryBuilder
     public function get(bool $useConnectionControl = false): array
     {
         $sql = $this->buildQuery();
-        $result = $this->connection->execute($sql, $useConnectionControl);
-        $this->reset();
-        return $result;
+
+        return $this->connection->execute($sql, $useConnectionControl);
     }
 
     /**
-     * 获取查询结果的第一条记录
+     * 获取查询结果的第一条记录（临时 LIMIT 1 后恢复原 limit）
      *
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array 第一条记录或空数组
@@ -186,13 +185,14 @@ class ClickHouseQueryBuilder
      */
     public function first(bool $useConnectionControl = false): array
     {
-        // 强制 LIMIT 1，避免全表扫描返回大结果集
+        $originalLimit = $this->limit;
         $this->limit = 1;
+
         $sql = $this->buildQuery();
         $result = $this->connection->execute($sql, $useConnectionControl);
-        $this->reset();
 
-        // 如果结果为空，返回空数组
+        $this->limit = $originalLimit;
+
         if (empty($result)) {
             return [];
         }
@@ -204,7 +204,7 @@ class ClickHouseQueryBuilder
     /**
      * 执行 COUNT 查询
      *
-     * @param string $column 要统计的字段，默认为 空
+     * @param string $column 要统计的字段，默认为空时使用 count()
      * @param bool $useConnectionControl 是否使用连接控制
      * @return int 统计结果
      * @throws ClickHouseQueryException
@@ -386,9 +386,9 @@ class ClickHouseQueryBuilder
     }
 
     /**
-     * 重置查询构建器状态
+     * 清空当前构建器上的查询条件（同表新实例请用 newQuery()）
      */
-    private function reset(): void
+    public function fresh(): self
     {
         $this->fields = [];
         $this->conditions = [
@@ -403,6 +403,8 @@ class ClickHouseQueryBuilder
         $this->useGlobalConditions = true;
         $this->conditionsOptimized = false;
         $this->resetWithFrom();
+
+        return $this;
     }
 
 

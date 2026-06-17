@@ -35,7 +35,7 @@ trait WithFromBuilderTrait
         $callback($subQuery);
         
         // 添加到 WITH 数组
-        $this->with[$alias] = $subQuery->toSql();
+        $this->with[$alias] = $subQuery->buildQuery();
         
         return $this;
     }

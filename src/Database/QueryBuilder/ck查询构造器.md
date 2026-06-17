@@ -100,10 +100,14 @@ $pageData = $query
 
 > `paginate()` 第三个参数 `wrapCountWithClause` 由**调用方决定**，组件不做自动判断。
 
-#### 兼容入口 getPageData()（存量代码）
+#### 兼容入口 getPageData()（存量代码，待迁移）
+
+> **兼容说明**：第二参数 `$useWithClause` 默认 `true`，与历史 center_sys 行为一致（普通表也会 WITH 包装计数，性能较差）。  
+> **新代码禁止再用**，请迁移至 `paginate()` 或 `AbstractService::paginate()`；存量迁移完成后将删除 `getPageData()`。
 
 ```php
 // 从 HTTP 请求读取 page / pageSize（params 为空时）
+// ⚠️ 默认 useWithClause=true，普通表也会 WITH 包装计数
 $pageData = $query->getPageData();
 
 // 自定义分页参数
@@ -128,12 +132,26 @@ $allData = $query->getPageData(['is_export' => true]);
 ```php
 class LogService extends AbstractService
 {
+    // 普通表列表
     public function list(array $where): array
     {
         $query = $this->query()->where($where)->select(['*']);
 
         // 列表：分页结构；is_export=true 时返回裸数组（与 getPageData 一致）
-        return $this->paginate($query);
+        return $this->paginate($query, false);
+    }
+
+    // CTE 聚合列表
+    public function statsList(array $where): array
+    {
+        $query = $this->query()
+            ->with('Stats', function ($q) use ($where) {
+                $q->where($where)->select(['server_id', 'COUNT(*) as cnt'])->groupBy(['server_id']);
+            })
+            ->from('Stats')
+            ->select(['*']);
+
+        return $this->paginate($query, true);
     }
 }
 ```
@@ -145,10 +163,11 @@ class LogService extends AbstractService
 | 列表 | `{total, per_page, current_page, last_page, data}` |
 | `is_export=true` | 裸二维数组 `[...]` |
 
-`$useWithClause` 三态：`null` 有 `from` 才 WITH 计数；`true` 强制 WITH；`false` 强制直接 count。
+`$useWithClause` 二态：`true` 强制 WITH 包装计数；`false` 强制直接 count（CTE 场景须传 `true`）。
 
 
 ### 2.4 统计
+
 ```php
 $count = $query->count();
 
@@ -157,7 +176,15 @@ $count = $query->count('distinct user_id');
 $count = $query->where([
     ['status', '=', 1]
 ])->count();
+
+// count() / get() 不重置构建器，可继续链式查询
+$total = $query->where([['status', '=', 1]])->count();
+$list = $query->limit(10)->offset(0)->get();
 ```
+
+> `get()` / `count()` / `first()` 执行后保留 where、with 等状态
+> 全新查询用 `newQuery()`；清空当前实例条件用 `fresh()`。  
+> 带 `GROUP BY` 时分页 total 请用 `paginate(..., true)` 包装计数，勿直接用 `count()` 结果当 total。
 
 ### 2.5 HAVING 子句
 
@@ -233,6 +260,8 @@ $result = $query
     ->get();
 ```
 
+> `withoutGlobalConditions()` / `withGlobalConditions()` 对**当前实例**持续生效，不会随 `get()` 自动恢复；需要默认行为时请 `withGlobalConditions()` 或 `newQuery()`。
+
 ### 4.3 使用场景
 1. 需要查询其他游戏数据时
 2. 统计多个游戏的数据时
@@ -262,7 +291,17 @@ $count = $query->count('', true);
 $pageData = $query->getPageData([], true, '', true);
 ```
 
-### 5.4 自定义配置
+### 5.4 实例复用
+
+```php
+// 同表新实例（共用 connection，不含当前 where/limit/with，等同 Hyperf/TP 的 newQuery）
+$other = $query->newQuery()->where([['status', '=', 1]])->get();
+
+// 清空当前实例上的条件（等同 TP 的 removeOption('')）
+$query->fresh()->where([['type', '=', 2]])->get();
+```
+
+### 5.5 自定义配置
 ```php
 // 在创建查询构建器时指定配置
 $query = new ClickHouseQueryBuilder('table_name', [
@@ -372,13 +411,13 @@ $query->where([['log_time', 'BETWEEN', [1717516800, 1717603200]]]);
 
 ## 7. 注意事项
 
-1. 查询执行后会自动重置状态
+1. `get()` / `count()` / `first()` 执行后**保留**构建器状态，可同实例继续链式调用；全新查询用 `newQuery()`，清空条件用 `fresh()`
 2. 字符串值会自动添加引号和转义
 3. 默认添加全局条件(game_id)
 4. WITH 子句中的子查询会继承全局条件
 5. 建议使用连接控制避免并发查询过多
 6. 复杂查询建议先使用 toSql() 检查生成的SQL
-7. withoutGlobalConditions() 只对当前查询有效
-8. 分页：`paginate()` 为组件推荐入口；`getPageData()` 为兼容存量；业务侧推荐 `AbstractService::paginate()`
+7. `withoutGlobalConditions()` 对当前实例持续生效，需手动 `withGlobalConditions()` 或 `newQuery()` 恢复
+8. 分页：`paginate()` 为组件推荐入口；`getPageData()` 为兼容存量（默认 WITH 计数，待迁移后删除）；业务侧推荐 `AbstractService::paginate($query, false|true)`；含 `GROUP BY`/`HAVING` 时分页 total 自动包子查询 count（对标 Hyperf/TP）
 9. 导出：`is_export=true` 时 `getPageData()` 与 `AbstractService::paginate()` 均返回裸数组，非分页结构
 10. 时间分区优化默认启用，可在配置中关闭

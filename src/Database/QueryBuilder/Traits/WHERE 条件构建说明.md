@@ -163,7 +163,7 @@ $query->withGlobalConditions()
     ->get();
 ```
 
-> 注意: withoutGlobalConditions() 只对当前查询有效,执行完查询后会自动重置状态
+> 注意: `withoutGlobalConditions()` 对当前实例持续生效，需手动 `withGlobalConditions()` 或 `newQuery()` 恢复
 
 ## 5. 注意事项
 

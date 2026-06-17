@@ -141,7 +141,7 @@ $result = $builder
 ## 注意事项
 
 * 必须使用 try-catch 处理异常
-* 查询执行后自动重置状态
+* `get()` 执行后保留构建器状态；全新查询用 `newQuery()`，清空条件用 `fresh()`
 * WHERE条件需使用数组格式
 * 字段名需符合ClickHouse规范
 

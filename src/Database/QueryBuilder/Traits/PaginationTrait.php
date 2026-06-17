@@ -28,7 +28,7 @@ trait PaginationTrait
     public function paginate(
         int $page,
         int $perPage,
-        bool $wrapCountWithClause = false,
+        bool $wrapCountWithClause,
         string $countField = '',
         bool $useConnectionControl = false
     ): array {
@@ -51,9 +51,9 @@ trait PaginationTrait
     /**
      * 获取分页数据（兼容旧调用，业务解析请用 Service::paginate）
      *
-     * @deprecated 请使用 paginate($page, $perPage, $wrapCountWithClause) 或 AbstractService::paginate()
+     * @deprecated 请使用 paginate($page, $perPage, $wrapCountWithClause) 或 AbstractService::paginate()；后续版本将移除
      * @param array $params 请求参数数组
-     * @param bool $useWithClause false 时仍会对有 from 的查询自动包装；true 强制包装。见 AbstractService::resolveWrapCountWithClause()
+     * @param bool $useWithClause 默认 true（兼容历史行为）；true=WITH 包装计数，false=直接 count（CTE 场景须传 true）
      * @param string $countField 计数字段
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array 分页结果或导出时的裸数据列表
@@ -61,7 +61,7 @@ trait PaginationTrait
      */
     public function getPageData(
         array $params = [],
-        bool $useWithClause = false,
+        bool $useWithClause = true,
         string $countField = '',
         bool $useConnectionControl = false
     ): array {
@@ -75,12 +75,11 @@ trait PaginationTrait
 
         $page = max(1, (int)($params['page'] ?? 1));
         $perPage = max(1, (int)($params['pageSize'] ?? 10));
-        $wrapCountWithClause = $useWithClause || ($this->getFrom() !== '');
 
         return $this->paginate(
             $page,
             $perPage,
-            $wrapCountWithClause,
+            $useWithClause,
             $countField,
             $useConnectionControl
         );

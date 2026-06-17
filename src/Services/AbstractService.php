@@ -57,8 +57,8 @@ abstract class AbstractService
      * 应用层分页入口（推荐）
      *
      * @param ClickHouseQueryBuilder $query 已组装好条件的查询构建器
+     * @param bool $useWithClause 计数 WITH 策略，true 时强制包装，false 时强制不包装
      * @param array $params 分页参数，空数组时从当前 HTTP 请求读取
-     * @param bool|null $useWithClause 计数 WITH 策略，见 resolveWrapCountWithClause()
      * @param string $countField 计数字段
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array 列表为分页结构 {total, per_page, current_page, last_page, data}；is_export 时为裸二维数组（同 getPageData）
@@ -66,8 +66,8 @@ abstract class AbstractService
      */
     protected function paginate(
         ClickHouseQueryBuilder $query,
+        bool $useWithClause,
         array $params = [],
-        ?bool $useWithClause = null,
         string $countField = '',
         bool $useConnectionControl = false
     ): array {
@@ -84,7 +84,7 @@ abstract class AbstractService
         return $query->paginate(
             (int)$params['page'],
             (int)$params['pageSize'],
-            $this->resolveWrapCountWithClause($query, $useWithClause),
+            $useWithClause,
             $countField,
             $useConnectionControl
         );
@@ -104,30 +104,6 @@ abstract class AbstractService
             'page' => max(1, (int)($params['page'] ?? 1)),
             'pageSize' => max(1, (int)($params['pageSize'] ?? 10)),
         ];
-    }
-
-    /**
-     * 解析计数是否用 WITH 子查询包装（服务层策略，三态语义）
-     *
-     * | 传入值 | 行为 |
-     * |--------|------|
-     * | null（paginate 默认） | 自动：仅当查询设置了自定义 from（CTE 别名）时包装，否则直接 count |
-     * | true | 强制 WITH 包装（等同历史 getPageData([], true)） |
-     * | false | 强制直接 count，不包装（即使存在 from；CTE 场景勿用） |
-     *
-     * 与 getPageData($params, false) 的区别：旧兼容入口在 false 时仍会对有 from 的查询自动包装。
-     */
-    protected function resolveWrapCountWithClause(ClickHouseQueryBuilder $query, ?bool $useWithClause): bool
-    {
-        if ($useWithClause === true) {
-            return true;
-        }
-
-        if ($useWithClause === false) {
-            return false;
-        }
-
-        return $query->getFrom() !== '';
     }
 
     /**

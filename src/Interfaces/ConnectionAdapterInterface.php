@@ -20,4 +20,12 @@ interface ConnectionAdapterInterface
      * @return array
      */
     public function getRequestParams(): array;
+
+    /**
+     * 解析当前页码
+     *
+     * @param string $varPage 请求参数名，默认 page
+     * @param int $default 无效或未传时的默认值
+     */
+    public function getCurrentPage(string $varPage = 'page', int $default = 1): int;
 }

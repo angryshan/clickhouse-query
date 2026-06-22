@@ -57,4 +57,25 @@ class HyperfAdapter implements ConnectionAdapterInterface
         $request = $container->get(\Hyperf\HttpServer\Contract\RequestInterface::class);
         return $request->all();
     }
+
+    /**
+     * 解析当前页码（委托 Hyperf Paginator::resolveCurrentPage）
+     */
+    public function getCurrentPage(string $varPage = 'page', int $default = 1): int
+    {
+        if (class_exists(\Hyperf\Paginator\Paginator::class)) {
+            $page = \Hyperf\Paginator\Paginator::resolveCurrentPage($varPage, $default);
+            return $page >= 1 ? $page : $default;
+        }
+
+        $container = \Hyperf\Utils\ApplicationContext::getContainer();
+        $request = $container->get(\Hyperf\HttpServer\Contract\RequestInterface::class);
+        $page = $request->input($varPage, $default);
+
+        if (filter_var($page, FILTER_VALIDATE_INT) !== false && (int) $page >= 1) {
+            return (int) $page;
+        }
+
+        return $default;
+    }
 }

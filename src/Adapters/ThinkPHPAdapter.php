@@ -58,4 +58,23 @@ class ThinkPHPAdapter implements ConnectionAdapterInterface
         $request = request();
         return $request->param();
     }
+
+    /**
+     * 解析当前页码（委托 TP PaginatorService 注册的 currentPageResolver）
+     */
+    public function getCurrentPage(string $varPage = 'page', int $default = 1): int
+    {
+        if (class_exists(\think\Paginator::class)) {
+            $page = \think\Paginator::getCurrentPage($varPage, $default);
+            return $page >= 1 ? $page : $default;
+        }
+
+        $page = request()->param($varPage);
+
+        if (filter_var($page, FILTER_VALIDATE_INT) !== false && (int) $page >= 1) {
+            return (int) $page;
+        }
+
+        return $default;
+    }
 }

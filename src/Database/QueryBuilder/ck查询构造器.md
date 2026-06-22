@@ -75,13 +75,18 @@ $result = $query->limit(10)->offset(20)->get();
 // 获取总数
 $total = $query->count();
 
-// 推荐：纯分页（调用方显式传入 page、是否 WITH 计数）
-$pageData = $query->paginate(
-    1,      // page
-    10,     // perPage
-    false,  // wrapCountWithClause：是否用 WITH 子查询包装计数
-    ''      // countField
-);
+// 推荐：Hyperf 式分页（perPage 在前；page 省略时从 HTTP 读取）
+$pageData = $query->paginate(10, false);
+
+// 显式页码
+$pageData = $query->paginate(10, false, 3);
+
+// 链式：指定 COUNT 字段
+$pageData = $query
+    ->where($where)
+    ->countField('distinct user_id')
+    ->paginate(10, false);
+
 // 返回格式:
 // [
 //     'total' => 100,         // 总记录数
@@ -95,15 +100,17 @@ $pageData = $query->paginate(
 $pageData = $query
     ->with('Stats', function ($q) { /* ... */ })
     ->from('Stats')
-    ->paginate(1, 10, true);
+    ->paginate(10, true, 1);
 ```
 
-> `paginate()` 第三个参数 `wrapCountWithClause` 由**调用方决定**，组件不做自动判断。
+> `paginate()` 第二个参数 `wrapCountWithClause` 由**调用方决定**，组件不做自动判断。  
+> `page` 为 `null` 时走 `Adapter::getCurrentPage()`（TP：`Paginator::getCurrentPage`；Hyperf：`Paginator::resolveCurrentPage`）。  
+> 分页固定走 **COUNT + SELECT** 两次查询（TCP/PDO 友好）。
 
 #### 兼容入口 getPageData()（存量代码，待迁移）
 
 > **兼容说明**：第二参数 `$useWithClause` 默认 `true`，与历史 center_sys 行为一致（普通表也会 WITH 包装计数，性能较差）。  
-> **新代码禁止再用**，请迁移至 `paginate()` 或 `AbstractService::paginate()`；存量迁移完成后将删除 `getPageData()`。
+> **新代码禁止再用**，请迁移至 `$query->paginate()`；存量迁移完成后将删除 `getPageData()`。
 
 ```php
 // 从 HTTP 请求读取 page / pageSize（params 为空时）
@@ -123,47 +130,38 @@ $pageData = $query->getPageData([], true, 'id');
 $allData = $query->getPageData(['is_export' => true]);
 ```
 
-> 新代码请用 `paginate()` 或 `AbstractService::paginate()`，勿再扩展 `getPageData()`。
+> 新代码请用 `$query->paginate()`，勿再扩展 `getPageData()`。
 
-#### 服务层（业务入口，推荐）
+#### 控制器层（推荐）
 
-继承 `AbstractService` 后使用 `paginate()`，统一处理：请求参数、pageSize 上限、偏移校验。
+分页协议（读 HTTP、导出、偏移校验）放在 Controller / 基类；Service 只组装 query。
 
 ```php
+class LogController extends CkBaseController
+{
+    public function index(LogService $service)
+    {
+        $query = $service->buildListQuery($where);
+
+        if (Request::param('is_export')) {
+            return $query->get();
+        }
+
+        // page 省略时从 HTTP 读取
+        return $query->paginate($this->pageSize, false);
+    }
+}
+
 class LogService extends AbstractService
 {
-    // 普通表列表
-    public function list(array $where): array
+    public function buildListQuery(array $where): ClickHouseQueryBuilder
     {
-        $query = $this->query()->where($where)->select(['*']);
-
-        // 列表：分页结构；is_export=true 时返回裸数组（与 getPageData 一致）
-        return $this->paginate($query, false);
-    }
-
-    // CTE 聚合列表
-    public function statsList(array $where): array
-    {
-        $query = $this->query()
-            ->with('Stats', function ($q) use ($where) {
-                $q->where($where)->select(['server_id', 'COUNT(*) as cnt'])->groupBy(['server_id']);
-            })
-            ->from('Stats')
-            ->select(['*']);
-
-        return $this->paginate($query, true);
+        return $this->query()->where($where)->select(['*']);
     }
 }
 ```
 
-返回约定：
-
-| 场景 | 返回 |
-|------|------|
-| 列表 | `{total, per_page, current_page, last_page, data}` |
-| `is_export=true` | 裸二维数组 `[...]` |
-
-`$useWithClause` 二态：`true` 强制 WITH 包装计数；`false` 强制直接 count（CTE 场景须传 `true`）。
+CTE 列表：`$query->paginate($this->pageSize, true)`（第二个参数 `true`）。
 
 
 ### 2.4 统计
@@ -418,6 +416,6 @@ $query->where([['log_time', 'BETWEEN', [1717516800, 1717603200]]]);
 5. 建议使用连接控制避免并发查询过多
 6. 复杂查询建议先使用 toSql() 检查生成的SQL
 7. `withoutGlobalConditions()` 对当前实例持续生效，需手动 `withGlobalConditions()` 或 `newQuery()` 恢复
-8. 分页：`paginate()` 为组件推荐入口；`getPageData()` 为兼容存量（默认 WITH 计数，待迁移后删除）；业务侧推荐 `AbstractService::paginate($query, false|true)`；含 `GROUP BY`/`HAVING` 时分页 total 自动包子查询 count（对标 Hyperf/TP）
-9. 导出：`is_export=true` 时 `getPageData()` 与 `AbstractService::paginate()` 均返回裸数组，非分页结构
+8. 分页：`paginate($perPage, $wrap, ?$page)` 为组件推荐入口；固定 COUNT + SELECT；`page=null` 时从 HTTP 读页码；`getPageData()` 为兼容存量；含 `GROUP BY`/`HAVING` 时分页 total 自动包子查询 count
+9. 导出：`is_export=true` 时在 Controller 分支直接 `$query->get()`，返回裸数组
 10. 时间分区优化默认启用，可在配置中关闭

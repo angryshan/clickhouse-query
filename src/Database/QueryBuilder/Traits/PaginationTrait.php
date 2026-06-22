@@ -15,28 +15,42 @@ use ClickHouseQuery\Exceptions\ClickHouseQueryException;
 trait PaginationTrait
 {
     /**
-     * 分页查询（推荐）
+     * 分页 COUNT 字段（空字符串时使用 count()）
+     */
+    private string $paginationCountField = '';
+
+    /**
+     * 指定分页 total 的 COUNT 字段（链式，对标 count('distinct user_id')）
+     */
+    public function countField(string $field): self
+    {
+        $this->paginationCountField = $field;
+
+        return $this;
+    }
+
+    /**
+     * 分页查询（推荐，对标 Hyperf Builder::paginate）
      *
-     * @param int $page 页码，从 1 开始
      * @param int $perPage 每页条数
      * @param bool $wrapCountWithClause 计数是否用 WITH 子查询包装（由调用方决定，组件不自动判断）
-     * @param string $countField 计数字段
+     * @param int|null $page 页码（从 1 开始）；null 时从当前 HTTP 请求读取（Adapter::getCurrentPage）
+     * @param string $pageName 请求参数名，默认 page
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array{total:int,per_page:int,current_page:int,last_page:int,data:array}
      * @throws ClickHouseQueryException
      */
     public function paginate(
-        int $page,
         int $perPage,
         bool $wrapCountWithClause,
-        string $countField = '',
+        ?int $page = null,
+        string $pageName = 'page',
         bool $useConnectionControl = false
     ): array {
-        $page = max(1, $page);
+        $page = max(1, $page ?? $this->connection->getAdapter()->getCurrentPage($pageName));
         $perPage = max(1, $perPage);
 
         $total = $this->countForPagination(
-            $countField,
             $wrapCountWithClause,
             $useConnectionControl
         );
@@ -49,12 +63,12 @@ trait PaginationTrait
     }
 
     /**
-     * 获取分页数据（兼容旧调用，业务解析请用 Service::paginate）
+     * 获取分页数据（兼容旧调用）
      *
-     * @deprecated 请使用 paginate($page, $perPage, $wrapCountWithClause) 或 AbstractService::paginate()；后续版本将移除
+     * @deprecated 请使用 paginate($perPage, $wrapCountWithClause, $page)；后续版本将移除
      * @param array $params 请求参数数组
      * @param bool $useWithClause 默认 true（兼容历史行为）；true=WITH 包装计数，false=直接 count（CTE 场景须传 true）
-     * @param string $countField 计数字段
+     * @param string $countField 计数字段（非空时临时作用于本次分页，不污染构建器状态）
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array 分页结果或导出时的裸数据列表
      * @throws ClickHouseQueryException
@@ -76,13 +90,26 @@ trait PaginationTrait
         $page = max(1, (int)($params['page'] ?? 1));
         $perPage = max(1, (int)($params['pageSize'] ?? 10));
 
-        return $this->paginate(
-            $page,
+        $query = clone $this;
+        if ($countField !== '') {
+            $query->countField($countField);
+        }
+
+        return $query->paginate(
             $perPage,
             $useWithClause,
-            $countField,
+            $page,
+            'page',
             $useConnectionControl
         );
+    }
+
+    /**
+     * 重置分页链式选项（fresh() 时调用）
+     */
+    protected function resetPaginationOptions(): void
+    {
+        $this->paginationCountField = '';
     }
 
     /**
@@ -102,10 +129,11 @@ trait PaginationTrait
      * 执行分页总数统计
      */
     private function countForPagination(
-        string $countField,
         bool $wrapCountWithClause,
         bool $useConnectionControl
     ): int {
+        $countField = $this->paginationCountField;
+
         if ($wrapCountWithClause) {
             $cteAlias = $this->paginationCountCteAlias();
             $countQuery = $this->newQuery()->with($cteAlias, function (&$query) {

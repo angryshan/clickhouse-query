@@ -403,6 +403,7 @@ class ClickHouseQueryBuilder
         $this->useGlobalConditions = true;
         $this->conditionsOptimized = false;
         $this->resetWithFrom();
+        $this->resetPaginationOptions();
 
         return $this;
     }

@@ -329,6 +329,188 @@ class ClickHouseQueryBuilderTest extends DatabaseTestCase
         $this->assertSame(1, substr_count($first, "`log_date` >= '2024-06-05'"));
     }
 
+    /**
+     * @test BETWEEN 时间戳条件自动追加日期 BETWEEN 分区条件
+     *       1717545600=2024-06-05，1717632000=2024-06-06
+     */
+    public function testTimePartitionOptimizationBetweenAddsDateRange(): void
+    {
+        $sql = $this->createBuilder('client_monitor_log', [
+            'time_partition_optimization' => [
+                'enabled' => true,
+                'timestamp_type' => 'seconds',
+                'field_mapping' => [
+                    'default' => ['log_time' => 'log_date'],
+                    'tables' => ['client_monitor_log' => ['log_time' => 'log_date']],
+                ],
+            ],
+        ])
+            ->whereBetween('log_time', 1717545600, 1717632000)
+            ->toSql();
+
+        $this->assertStringContainsString('`log_time` BETWEEN 1717545600 AND 1717632000', $sql);
+        $this->assertStringContainsString("`log_date` BETWEEN '2024-06-05' AND '2024-06-06'", $sql);
+    }
+
+    /**
+     * @test 毫秒时间戳表配置：server_monitor_log 使用 timestamp_type=milliseconds
+     *       1717545600000ms = 2024-06-05
+     */
+    public function testTimePartitionOptimizationWithMillisecondsTimestamp(): void
+    {
+        $sql = $this->createBuilder('server_monitor_log', [
+            'time_partition_optimization' => [
+                'enabled' => true,
+                'timestamp_type' => 'seconds',
+                'field_mapping' => [
+                    'default' => ['log_time' => 'log_date'],
+                    'tables' => [
+                        'server_monitor_log' => [
+                            'log_time' => 'log_date',
+                            'timestamp_type' => 'milliseconds',
+                        ],
+                    ],
+                ],
+            ],
+        ])
+            ->where([['log_time', '>=', 1717545600000]])
+            ->toSql();
+
+        $this->assertStringContainsString('`log_time` >= 1717545600000', $sql);
+        $this->assertStringContainsString("`log_date` >= '2024-06-05'", $sql);
+    }
+
+    /** @test 特定表映射：user_events 的 event_time → event_date */
+    public function testTimePartitionOptimizationTableSpecificMapping(): void
+    {
+        $sql = $this->createBuilder('user_events', [
+            'time_partition_optimization' => [
+                'enabled' => true,
+                'timestamp_type' => 'seconds',
+                'field_mapping' => [
+                    'default' => ['log_time' => 'log_date'],
+                    'tables' => [
+                        'user_events' => [
+                            'event_time' => 'event_date',
+                        ],
+                    ],
+                ],
+            ],
+        ])
+            ->where([['event_time', '>=', 1717545600]])
+            ->toSql();
+
+        $this->assertStringContainsString("`event_date` >= '2024-06-05'", $sql);
+        $this->assertStringNotContainsString('log_date', $sql);
+    }
+
+    /** @test 无表级配置时使用 field_mapping.default */
+    public function testTimePartitionOptimizationUsesDefaultMapping(): void
+    {
+        $sql = $this->createBuilder('generic_log', [
+            'time_partition_optimization' => [
+                'enabled' => true,
+                'timestamp_type' => 'seconds',
+                'field_mapping' => [
+                    'default' => ['log_time' => 'log_date'],
+                ],
+            ],
+        ])
+            ->where([['log_time', '>', 1717545600]])
+            ->toSql();
+
+        $this->assertStringContainsString('`log_time` > 1717545600', $sql);
+        $this->assertStringContainsString("`log_date` >= '2024-06-05'", $sql);
+    }
+
+    /** @test > 映射为 log_date >=，< 映射为 log_date <= */
+    public function testTimePartitionOptimizationOperatorMapping(): void
+    {
+        $config = [
+            'time_partition_optimization' => [
+                'enabled' => true,
+                'timestamp_type' => 'seconds',
+                'field_mapping' => ['default' => ['log_time' => 'log_date']],
+            ],
+        ];
+
+        $lessThanSql = $this->createBuilder('test_table', $config)
+            ->where([['log_time', '<', 1717545600]])
+            ->toSql();
+        $this->assertStringContainsString("`log_date` <= '2024-06-05'", $lessThanSql);
+
+        $equalSql = $this->createBuilder('test_table', $config)
+            ->where([['log_time', '=', 1717545600]])
+            ->toSql();
+        $this->assertStringContainsString("`log_date` = '2024-06-05'", $equalSql);
+    }
+
+    /** @test 13 位毫秒时间戳在 seconds 配置下自动按毫秒转换 */
+    public function testTimePartitionOptimizationAutoDetectsMillisecondTimestamp(): void
+    {
+        $sql = $this->createBuilder('test_table', [
+            'time_partition_optimization' => [
+                'enabled' => true,
+                'timestamp_type' => 'seconds',
+                'field_mapping' => ['default' => ['log_time' => 'log_date']],
+            ],
+        ])
+            ->where([['log_time', '>=', 1717545600000]])
+            ->toSql();
+
+        $this->assertStringContainsString("`log_date` >= '2024-06-05'", $sql);
+    }
+
+    /** @test 优化未启用时不追加日期条件 */
+    public function testTimePartitionOptimizationSkippedWhenDisabled(): void
+    {
+        $sql = $this->createBuilder('test_table', [
+            'time_partition_optimization' => [
+                'enabled' => false,
+                'field_mapping' => ['default' => ['log_time' => 'log_date']],
+            ],
+        ])
+            ->where([['log_time', '>=', 1717545600]])
+            ->toSql();
+
+        $this->assertStringContainsString('`log_time` >= 1717545600', $sql);
+        $this->assertStringNotContainsString('log_date', $sql);
+    }
+
+    /** @test 不支持的操作符（如 !=）不生成日期优化条件 */
+    public function testTimePartitionOptimizationSkipsUnsupportedOperator(): void
+    {
+        $sql = $this->createBuilder('test_table', [
+            'time_partition_optimization' => [
+                'enabled' => true,
+                'timestamp_type' => 'seconds',
+                'field_mapping' => ['default' => ['log_time' => 'log_date']],
+            ],
+        ])
+            ->where([['log_time', '!=', 1717545600]])
+            ->toSql();
+
+        $this->assertStringContainsString('`log_time` != 1717545600', $sql);
+        $this->assertStringNotContainsString('log_date', $sql);
+    }
+
+    /** @test 非法时间戳（超出范围）不追加日期条件 */
+    public function testTimePartitionOptimizationSkipsInvalidTimestamp(): void
+    {
+        $sql = $this->createBuilder('test_table', [
+            'time_partition_optimization' => [
+                'enabled' => true,
+                'timestamp_type' => 'seconds',
+                'field_mapping' => ['default' => ['log_time' => 'log_date']],
+            ],
+        ])
+            ->where([['log_time', '>=', 99999999999999]])
+            ->toSql();
+
+        $this->assertStringContainsString('`log_time` >= 99999999999999', $sql);
+        $this->assertStringNotContainsString('log_date', $sql);
+    }
+
     // =========================================================================
     // 构建器状态管理
     // =========================================================================
@@ -585,5 +767,109 @@ class ClickHouseQueryBuilderTest extends DatabaseTestCase
         $this->assertSame(12, $result['total']);
         $this->assertSame(5, $result['per_page']);
         $this->assertSame(2, $result['current_page']);
+    }
+
+    /**
+     * @test paginate(wrapCountWithClause=true) 使用 WITH CTE 包装计数查询
+     */
+    public function testPaginateWithWrapCountWithClause(): void
+    {
+        MockConnectionAdapter::$resultsQueue = [
+            [['count' => 15]],
+            [['id' => 1]],
+        ];
+
+        $result = $this->createBuilder()
+            ->select(['id'])
+            ->where(['status' => 1])
+            ->paginate(10, true, 1);
+
+        $this->assertSame(15, $result['total']);
+        $this->assertStringContainsString('WITH _ckqb_pagination_count_ AS', MockConnectionAdapter::$executedSql[0]);
+    }
+
+    /**
+     * @test GROUP BY 分页计数对分组结果包子查询再 count
+     */
+    public function testPaginateWithGroupByUsesAggregateSubqueryCount(): void
+    {
+        MockConnectionAdapter::$resultsQueue = [
+            [['count' => 3]],
+            [['user_id' => 1, 'cnt' => 5]],
+        ];
+
+        $result = $this->createBuilder()
+            ->select(['user_id', 'count() as cnt'])
+            ->groupBy(['user_id'])
+            ->paginate(10, false, 1);
+
+        $this->assertSame(3, $result['total']);
+        $this->assertStringContainsString('_ckqb_pagination_aggregate_', MockConnectionAdapter::$executedSql[0]);
+    }
+
+    /** @test HAVING 场景同样走聚合子查询计数 */
+    public function testPaginateWithHavingUsesAggregateSubqueryCount(): void
+    {
+        MockConnectionAdapter::$resultsQueue = [
+            [['count' => 2]],
+            [],
+        ];
+
+        $this->createBuilder()
+            ->select(['user_id', 'count() as cnt'])
+            ->groupBy(['user_id'])
+            ->having(['cnt' => ['cnt', '>', 0]])
+            ->paginate(10, false, 1);
+
+        $this->assertStringContainsString('_ckqb_pagination_aggregate_', MockConnectionAdapter::$executedSql[0]);
+    }
+
+    /** @test total=0 时 last_page 为 1 */
+    public function testPaginateLastPageIsOneWhenTotalIsZero(): void
+    {
+        MockConnectionAdapter::$resultsQueue = [
+            [['count' => 0]],
+            [],
+        ];
+
+        $result = $this->createBuilder()->paginate(10, false, 1);
+
+        $this->assertSame(0, $result['total']);
+        $this->assertSame(1, $result['last_page']);
+    }
+
+    /** @test getPageData() 支持传入 countField 参数 */
+    public function testGetPageDataWithCountField(): void
+    {
+        MockConnectionAdapter::$resultsQueue = [
+            [['count' => 8]],
+            [['id' => 1]],
+        ];
+
+        $result = $this->createBuilder()->getPageData(
+            ['page' => 1, 'pageSize' => 10],
+            true,
+            'distinct user_id'
+        );
+
+        $this->assertSame(8, $result['total']);
+        $this->assertStringContainsString('count(distinct user_id)', MockConnectionAdapter::$executedSql[0]);
+    }
+
+    /** @test formatInValues() 空数组抛出异常 */
+    public function testFormatInValuesThrowsOnEmptyArray(): void
+    {
+        $builder = $this->createBuilder();
+
+        $this->expectException(ClickHouseQueryException::class);
+        $builder->formatInValues([]);
+    }
+
+    /** @test formatValue() 支持数组嵌套 */
+    public function testFormatValueWithArray(): void
+    {
+        $builder = $this->createBuilder();
+
+        $this->assertSame('(1,2)', $builder->formatValue([1, 2]));
     }
 }

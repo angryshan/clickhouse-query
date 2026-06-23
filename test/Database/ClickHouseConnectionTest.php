@@ -132,4 +132,78 @@ class ClickHouseConnectionTest extends DatabaseTestCase
 
         $connection->query('SELECT 1');
     }
+
+    /**
+     * @test 连接数持续超限时抛出「等待可用连接超时」
+     *       max_wait_attempts=1 避免测试长时间 usleep
+     */
+    public function testExecuteThrowsWhenConnectionWaitTimesOut(): void
+    {
+        MockConnectionAdapter::$runningQueriesCount = 10;
+
+        $connection = $this->createConnection([
+            'max_running_processes' => 1,
+            'max_wait_attempts' => 1,
+            'wait_min_microseconds' => 0,
+            'wait_max_microseconds' => 0,
+        ]);
+
+        $this->expectException(ClickHouseQueryException::class);
+        $this->expectExceptionMessage('等待可用连接超时');
+
+        $connection->execute('SELECT 1', true);
+    }
+
+    /**
+     * @test system.processes 查询无 running_queries 字段时视为有可用连接
+     */
+    public function testExecuteProceedsWhenRunningQueriesCountIsNull(): void
+    {
+        $adapter = new class('clickhouse') extends MockConnectionAdapter {
+            public function query(string $sql)
+            {
+                self::$executedSql[] = $sql;
+
+                if ($sql === 'SELECT COUNT(*) AS running_queries FROM system.processes') {
+                    return [['other' => 1]];
+                }
+
+                return [['ok' => true]];
+            }
+        };
+
+        $connection = $this->createConnection([
+            'max_running_processes' => 1,
+        ]);
+        $reflection = new \ReflectionClass($connection);
+        $property = $reflection->getProperty('adapter');
+        $property->setAccessible(true);
+        $property->setValue($connection, new $adapter('clickhouse'));
+
+        $result = $connection->execute('SELECT 1', true);
+
+        $this->assertSame([['ok' => true]], $result);
+    }
+
+    /** @test execute 底层异常同样包装为 ClickHouseQueryException */
+    public function testExecuteWrapsExceptionAsClickHouseQueryException(): void
+    {
+        $adapter = new class('clickhouse') extends MockConnectionAdapter {
+            public function query(string $sql)
+            {
+                throw new \RuntimeException('execute failed');
+            }
+        };
+
+        $connection = $this->createConnection();
+        $reflection = new \ReflectionClass($connection);
+        $property = $reflection->getProperty('adapter');
+        $property->setAccessible(true);
+        $property->setValue($connection, new $adapter('clickhouse'));
+
+        $this->expectException(ClickHouseQueryException::class);
+        $this->expectExceptionMessage('execute failed');
+
+        $connection->execute('SELECT 1');
+    }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace ClickHouseQuery\Test\Tables;
+namespace ClickHouseQueryTest\Tables;
 
 use ClickHouseQuery\Tables\AbstractTable;
 class TestTable extends AbstractTable

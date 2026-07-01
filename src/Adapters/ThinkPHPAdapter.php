@@ -37,7 +37,18 @@ class ThinkPHPAdapter implements ConnectionAdapterInterface
      */
     public function query(string $sql)
     {
-        return $this->connection->query($sql);
+        $pdo = $this->connection->connect();
+
+        $statement = $pdo->prepare($sql);
+
+        $info = $statement->execute();
+
+        if (!$info) {
+            $errorInfo = $statement->errorInfo();
+            throw new \RuntimeException($errorInfo[2] ?? 'ClickHouse query failed');
+        }
+
+        return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     /**

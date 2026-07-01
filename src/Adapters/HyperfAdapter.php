@@ -36,7 +36,17 @@ class HyperfAdapter implements ConnectionAdapterInterface
      */
     public function query(string $sql)
     {
-        return $this->connection->query($sql);
+        return $this->connection->run(function (\PDO $pdo) use ($sql) {
+            $statement = $pdo->prepare($sql);
+            $info = $statement->execute();
+
+            if (!$info) {
+                $errorInfo = $statement->errorInfo();
+                throw new \RuntimeException($errorInfo[2] ?? 'ClickHouse query failed');
+            }
+
+            return $statement->fetchAll(\PDO::FETCH_ASSOC);
+        });
     }
     
     /**

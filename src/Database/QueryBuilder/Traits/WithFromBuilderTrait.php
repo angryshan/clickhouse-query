@@ -13,6 +13,7 @@ trait WithFromBuilderTrait
 {
     private string $from = '';
     private array $with = [];
+    private string $alias = '';
 
     /**
      * 设置 FROM 子句
@@ -20,6 +21,24 @@ trait WithFromBuilderTrait
     public function from(string $table): self
     {
         $this->from = $table;
+        return $this;
+    }
+
+    /**
+     * 设置表别名
+     *
+     * 别名会附加在 FROM 子句的表名（或 CTE 名称）之后：FROM table AS alias
+     *
+     * 注意：ClickHouse 中 WHERE 子句使用 别名.字段 时，
+     * SELECT 中也必须使用 别名.字段，否则会报 Unknown identifier 错误。
+     * 用不用别名、怎么用，由开发自行决定。
+     *
+     * @param string $alias 表别名
+     * @return self
+     */
+    public function alias(string $alias): self
+    {
+        $this->alias = $alias;
         return $this;
     }
 
@@ -63,7 +82,11 @@ trait WithFromBuilderTrait
     protected function buildFromClause(string $defaultTable = ''): string
     {
         $from = $this->from ?: $defaultTable;
-        return 'FROM ' . $from;
+        $sql = 'FROM ' . $from;
+        if (!empty($this->alias)) {
+            $sql .= ' AS ' . $this->alias;
+        }
+        return $sql;
     }
 
      /**
@@ -83,11 +106,20 @@ trait WithFromBuilderTrait
     }
 
     /**
+     * 获取当前表别名
+     */
+    public function getAlias(): string
+    {
+        return $this->alias;
+    }
+
+    /**
      * 重置状态
      */
     protected function resetWithFrom(): void
     {
         $this->from = '';
         $this->with = [];
+        $this->alias = '';
     }
 } 

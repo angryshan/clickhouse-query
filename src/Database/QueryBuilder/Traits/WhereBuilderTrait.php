@@ -18,6 +18,21 @@ trait WhereBuilderTrait
     ];
 
     /**
+     * 格式化字段名，支持 alias.field → `alias`.`field`
+     *
+     * @param string $field 字段名，可带 alias. 前缀
+     * @return string 格式化后的字段名
+     */
+    public function formatField(string $field): string
+    {
+        if (strpos($field, '.') !== false) {
+            $parts = explode('.', $field, 2);
+            return "`{$parts[0]}`.`{$parts[1]}`";
+        }
+        return "`{$field}`";
+    }
+
+    /**
      * 获取支持的操作符
      */
     private function getSupportedOperators(): array
@@ -39,7 +54,7 @@ trait WhereBuilderTrait
                 $this->conditions['AND'][] = $this->parseArrayCondition($value);
             } else {
                 // 等值查询: ['field' => value]
-                $this->conditions['AND'][] = "`{$field}` = " . $this->quoteValue($value);
+                $this->conditions['AND'][] = $this->formatField($field) . " = " . $this->quoteValue($value);
             }
         }
         return $this;
@@ -55,7 +70,7 @@ trait WhereBuilderTrait
                 $this->conditions['OR'][] = $this->parseArrayCondition($value);
             } else {
                 // 等值查询: ['field' => value]
-                $this->conditions['OR'][] = "`{$field}` = " . $this->quoteValue($value);
+                $this->conditions['OR'][] = $this->formatField($field) . " = " . $this->quoteValue($value);
             }
         }
         return $this;
@@ -66,7 +81,7 @@ trait WhereBuilderTrait
      */
     public function whereNull(string $column): self
     {
-        $this->conditions['AND'][] = "`{$column}` IS NULL";
+        $this->conditions['AND'][] = $this->formatField($column) . " IS NULL";
         return $this;
     }
 
@@ -75,7 +90,7 @@ trait WhereBuilderTrait
      */
     public function whereNotNull(string $column): self
     {
-        $this->conditions['AND'][] = "`{$column}` IS NOT NULL";
+        $this->conditions['AND'][] = $this->formatField($column) . " IS NOT NULL";
         return $this;
     }
     
@@ -84,7 +99,7 @@ trait WhereBuilderTrait
      */
     public function whereIn(string $column, array $values): self
     {
-        $this->conditions['AND'][] = sprintf("`%s` IN (%s)", $column, $this->formatInValues($values));
+        $this->conditions['AND'][] = sprintf("%s IN (%s)", $this->formatField($column), $this->formatInValues($values));
         return $this;
     }
 
@@ -93,7 +108,7 @@ trait WhereBuilderTrait
      */
     public function whereNotIn(string $column, array $values): self
     {
-        $this->conditions['AND'][] = sprintf("`%s` NOT IN (%s)", $column, $this->formatInValues($values));
+        $this->conditions['AND'][] = sprintf("%s NOT IN (%s)", $this->formatField($column), $this->formatInValues($values));
         return $this;
     }
 
@@ -103,8 +118,8 @@ trait WhereBuilderTrait
     public function whereBetween(string $column, $start, $end): self
     {
         $this->conditions['AND'][] = sprintf(
-            "`%s` BETWEEN %s AND %s",
-            $column,
+            "%s BETWEEN %s AND %s",
+            $this->formatField($column),
             $this->formatValue($start),
             $this->formatValue($end)
         );
@@ -214,7 +229,7 @@ trait WhereBuilderTrait
             if (empty($value)) {
                 throw new ClickHouseQueryException('IN/NOT IN 操作符的值数组不能为空');
             }
-            return sprintf("`%s` %s (%s)", $field, strtoupper($operator), $this->formatInValues($value));
+            return sprintf("%s %s (%s)", $this->formatField($field), strtoupper($operator), $this->formatInValues($value));
         }
 
         // 处理 BETWEEN 条件
@@ -226,8 +241,8 @@ trait WhereBuilderTrait
                 throw new ClickHouseQueryException('BETWEEN 操作符的值不能为 NULL');
             }
             return sprintf(
-                "`%s` BETWEEN %s AND %s",
-                $field,
+                "%s BETWEEN %s AND %s",
+                $this->formatField($field),
                 $this->formatValue($value[0]),
                 $this->formatValue($value[1])
             );
@@ -238,7 +253,7 @@ trait WhereBuilderTrait
             throw new ClickHouseQueryException('条件值不能为 NULL,请使用 whereNull/whereNotNull');
         }
 
-        return "`{$field}` {$operator} " . $this->quoteValue($value);
+        return $this->formatField($field) . " {$operator} " . $this->quoteValue($value);
     }
 
     /**

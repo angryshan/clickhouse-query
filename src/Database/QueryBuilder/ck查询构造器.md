@@ -235,6 +235,31 @@ $result = $query
     ->get();
 ```
 
+### 3.3 表别名
+
+`alias('t')` 把 FROM 写成 `FROM table AS t`。`t.field` 只在这些方法里拆成 `` `t`.`field` ``：
+
+- `where` / `orWhere` / `whereIn` / `whereNotIn` / `whereBetween` / `whereNull` / `whereNotNull`
+- `orderBy`
+- `having`（等值和三元组一样）
+
+`select()`、`groupBy()`、`whereRaw()` 保持传入的原字符串，不加反引号。
+
+```php
+$query->alias('t')
+    ->select(['t.game_id', 't.log_time'])
+    ->where([['t.log_time', '>=', 1717516800]])
+    ->orderBy('t.log_time', 'DESC')
+    ->get();
+// SELECT t.game_id, t.log_time FROM table AS t
+// WHERE `t`.`log_time` >= 1717516800
+// ORDER BY `t`.`log_time` DESC
+```
+
+`having(['t.cnt' => 1])` 表示表 `t` 的列 `cnt`，不是 SELECT 里的别名 `cnt`。聚合结果写 `having(['cnt' => 1])`。带前缀时，FROM 要先 `alias('t')`，字段必须是真实列，例如 `t.game_id`。
+
+ClickHouse 里 WHERE 用了 `t.column` 时，SELECT 也要自己写成 `t.column`，否则会报 Unknown identifier。`fresh()` 会清掉别名。
+
 ## 4. 全局条件控制
 
 ### 4.1 默认行为

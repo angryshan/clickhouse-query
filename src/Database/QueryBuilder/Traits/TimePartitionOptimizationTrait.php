@@ -100,32 +100,43 @@ trait TimePartitionOptimizationTrait
     /**
      * 从条件字符串中解析字段、操作符和值
      * 
-     * @param string $conditionStr 条件字符串，如: "`log_time` >= 1234567890" 或 "`log_time` BETWEEN 123 AND 456"
+     * 支持两种字段格式：
+     * - 普通字段：`log_time` >= 1234567890
+     * - 带别名前缀：`t`.`log_time` >= 1234567890
+     * 
+     * @param string $conditionStr 条件字符串
      * @return array|null 返回 ['field' => ..., 'operator' => ..., 'value' => ...] 或 null
      */
     protected function parseConditionString(string $conditionStr): ?array
     {
+        // 字段名模式：匹配 `field` 或 `alias`.`field`
+        // `field` → 捕获 field
+        // `alias`.`field` → 捕获 field（丢弃 alias 部分）
+        $fieldPattern = '(?:`([^`]+)`\.)?`([^`]+)`';
+
         // 优先匹配 BETWEEN 操作符（支持数字和带引号的数字）
-        $betweenPattern = '/^\(?\s*`([^`]+)`\s+BETWEEN\s+\'?(\d+)\'?\s+AND\s+\'?(\d+)\'?\s*\)?$/i';
+        $betweenPattern = '/^\(?\s*' . $fieldPattern . '\s+BETWEEN\s+\'?(\d+)\'?\s+AND\s+\'?(\d+)\'?\s*\)?$/i';
         if (preg_match($betweenPattern, trim($conditionStr), $matches)) {
+            // $matches[1] = alias（可选）, $matches[2] = field, $matches[3] = start, $matches[4] = end
             return [
-                'field' => $matches[1],
+                'field' => $matches[2],
                 'operator' => 'BETWEEN',
-                'value' => [$matches[2], $matches[3]],  // 返回数组 [start, end]
+                'value' => [$matches[3], $matches[4]],
             ];
         }
 
         // 匹配普通操作符: =, >, <, >=, <=, !=, <>
         // 支持括号包围的条件: (condition)
-        $pattern = '/^\(?\s*`([^`]+)`\s*(>=|<=|<>|!=|=|>|<)\s*(.+?)\s*\)?$/';
+        $pattern = '/^\(?\s*' . $fieldPattern . '\s*(>=|<=|<>|!=|=|>|<)\s*(.+?)\s*\)?$/';
         
         if (!preg_match($pattern, trim($conditionStr), $matches)) {
             return null;
         }
 
-        $field = $matches[1];
-        $operator = $matches[2];
-        $valueStr = trim($matches[3]);
+        // $matches[1] = alias（可选）, $matches[2] = field, $matches[3] = operator, $matches[4] = value
+        $field = $matches[2];
+        $operator = $matches[3];
+        $valueStr = trim($matches[4]);
 
         // 解析值（去除引号和尾部括号）
         $valueStr = rtrim($valueStr, ')');
@@ -238,8 +249,8 @@ trait TimePartitionOptimizationTrait
             }
 
             // 使用更精确的正则匹配，避免子串误判
-            // 匹配: `field` 后面跟着操作符
-            if (preg_match("/`" . preg_quote($field, '/') . "`\s*(>=|<=|<>|!=|=|>|<|IN|BETWEEN|IS|LIKE)/i", $conditionStr)) {
+            // 匹配: `field` 或 `alias`.`field` 后面跟着操作符
+            if (preg_match("/(?:`[^`]+`\.)?`" . preg_quote($field, '/') . "`\s*(>=|<=|<>|!=|=|>|<|IN|BETWEEN|IS|LIKE)/i", $conditionStr)) {
                 return true;
             }
         }

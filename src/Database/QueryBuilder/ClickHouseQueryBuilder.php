@@ -109,8 +109,8 @@ class ClickHouseQueryBuilder
                 // 数组格式: [['field', 'operator', 'value']]
                 $this->havingConditions[] = $this->parseArrayCondition($value);
             } else {
-                // 等值查询: ['field' => value]
-                $this->havingConditions[] = "`{$field}` = " . $this->quoteValue($value);
+                // 等值查询: ['field' => value]，alias.field 与 WHERE 一样拆段加反引号
+                $this->havingConditions[] = $this->formatField((string)$field) . ' = ' . $this->quoteValue($value);
             }
         }
 
@@ -129,11 +129,11 @@ class ClickHouseQueryBuilder
         // 处理数组格式：['field1' => 'ASC', 'field2' => 'DESC']
         if (is_array($column)) {
             foreach ($column as $field => $dir) {
-                $this->orderBy[] = "`{$field}` " . strtoupper($dir);
+                $this->orderBy[] = $this->formatField((string)$field) . ' ' . strtoupper((string)$dir);
             }
         } else {
-            // 处理字符串格式：'field', 'ASC'
-            $this->orderBy[] = "`{$column}` " . strtoupper($direction);
+            // 处理字符串格式：'field', 'ASC'；t.log_time → `t`.`log_time`
+            $this->orderBy[] = $this->formatField((string)$column) . ' ' . strtoupper($direction);
         }
         return $this;
     }

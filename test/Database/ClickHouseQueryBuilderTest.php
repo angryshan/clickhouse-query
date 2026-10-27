@@ -230,6 +230,41 @@ class ClickHouseQueryBuilderTest extends DatabaseTestCase
         $this->assertSame('ORDER BY `id` DESC, `name` ASC', $orderBy);
     }
 
+    /**
+     * @test 别名字段在 WHERE 与 ORDER BY 都拆成 `alias`.`field`，分区优化仍能补上 log_date
+     *       1717545600 = 2024-06-05（秒级时间戳）
+     */
+    public function testAliasFieldQuotedInWhereAndOrderByWithPartitionOptimization(): void
+    {
+        $sql = $this->createBuilder('client_monitor_log', [
+            'time_partition_optimization' => [
+                'enabled' => true,
+                'timestamp_type' => 'seconds',
+                'field_mapping' => [
+                    'default' => ['log_time' => 'log_date'],
+                ],
+            ],
+        ])
+            ->alias('t')
+            ->where([['t.log_time', '>=', 1717545600]])
+            ->orderBy('t.log_time')
+            ->toSql();
+
+        $this->assertStringContainsString('`t`.`log_time` >= 1717545600', $sql);
+        $this->assertStringContainsString('ORDER BY `t`.`log_time` ASC', $sql);
+        $this->assertStringContainsString("`log_date` >= '2024-06-05'", $sql);
+    }
+
+    /** @test having() 等值写法对 alias.field 与 WHERE 使用同一套字段格式化 */
+    public function testHavingEqualityUsesFormatField(): void
+    {
+        $sql = $this->createBuilder()
+            ->having(['t.cnt' => 1])
+            ->toSql();
+
+        $this->assertStringContainsString('HAVING `t`.`cnt` = 1', $sql);
+    }
+
     // =========================================================================
     // 全局条件
     // =========================================================================

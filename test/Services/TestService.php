@@ -1,9 +1,9 @@
 <?php
 
-namespace ClickHouseQueryTest\Services;
+namespace TxAdmin\ClickHouseQueryTest\Services;
 
-use ClickHouseQuery\Services\AbstractService;
-use ClickHouseQueryTest\Tables\TestTable;
+use TxAdmin\ClickHouseQuery\Services\AbstractService;
+use TxAdmin\ClickHouseQueryTest\Tables\TestTable;
 
 class TestService extends AbstractService
 {

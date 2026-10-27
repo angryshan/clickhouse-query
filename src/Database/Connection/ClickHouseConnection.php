@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Database\Connection;
+namespace TxAdmin\ClickHouseQuery\Database\Connection;
 
-use ClickHouseQuery\Exceptions\ClickHouseQueryException;
-use ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
-use ClickHouseQuery\Factories\AdapterFactory;
+use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
+use TxAdmin\ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
+use TxAdmin\ClickHouseQuery\Factories\AdapterFactory;
 use Throwable;
 
 /**

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Database\QueryBuilder\Traits;
+namespace TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits;
 
-use ClickHouseQuery\Exceptions\ClickHouseQueryException;
+use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
 /**
  * 条件查询
  * @package ClickHouseQuery\Database\QueryBuilder\Traits

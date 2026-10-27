@@ -1,8 +1,8 @@
 <?php
 
-namespace ClickHouseQueryTest\Tables;
+namespace TxAdmin\ClickHouseQueryTest\Tables;
 
-use ClickHouseQuery\Tables\AbstractTable;
+use TxAdmin\ClickHouseQuery\Tables\AbstractTable;
 class TestTable extends AbstractTable
 {
 

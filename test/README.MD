@@ -24,9 +24,9 @@ test/
 ```php
 <?php
 
-namespace ClickHouseQuery\Test\Tables;
+namespace TxAdmin\ClickHouseQuery\Test\Tables;
 
-use ClickHouseQuery\Tables\AbstractTable;
+use TxAdmin\ClickHouseQuery\Tables\AbstractTable;
 
 class TestTable extends AbstractTable
 {
@@ -47,9 +47,9 @@ class TestTable extends AbstractTable
 ```php
 <?php
 
-namespace ClickHouseQuery\Test\Services;
+namespace TxAdmin\ClickHouseQuery\Test\Services;
 
-use ClickHouseQuery\Test\Tables\TestTable;
+use TxAdmin\ClickHouseQuery\Test\Tables\TestTable;
 
 class TestService extends AbstractService
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery;
+namespace TxAdmin\ClickHouseQuery;
 
 /**
  * 配置提供者

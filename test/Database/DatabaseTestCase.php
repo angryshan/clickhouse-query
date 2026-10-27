@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQueryTest\Database;
+namespace TxAdmin\ClickHouseQueryTest\Database;
 
-use ClickHouseQuery\Database\Connection\ClickHouseConnection;
-use ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
-use ClickHouseQueryTest\Mocks\MockConnectionAdapter;
+use TxAdmin\ClickHouseQuery\Database\Connection\ClickHouseConnection;
+use TxAdmin\ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
+use TxAdmin\ClickHouseQueryTest\Mocks\MockConnectionAdapter;
 use PHPUnit\Framework\TestCase;
 
 /**

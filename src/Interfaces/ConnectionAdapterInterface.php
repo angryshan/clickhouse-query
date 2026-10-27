@@ -3,7 +3,7 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Interfaces;
+namespace TxAdmin\ClickHouseQuery\Interfaces;
 
 /**
  * 数据库连接适配器接口

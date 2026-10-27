@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Services;
+namespace TxAdmin\ClickHouseQuery\Services;
 
-use ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
-use ClickHouseQuery\Exceptions\ClickHouseQueryException;
+use TxAdmin\ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
+use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
 
 /**
  * 查询服务抽象基类

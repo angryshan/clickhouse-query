@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQueryTest\Mocks;
+namespace TxAdmin\ClickHouseQueryTest\Mocks;
 
-use ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
+use TxAdmin\ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
 
 /**
  * 单元测试用连接适配器

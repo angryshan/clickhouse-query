@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Tables;
+namespace TxAdmin\ClickHouseQuery\Tables;
 
-use ClickHouseQuery\Interfaces\TableInterface;
+use TxAdmin\ClickHouseQuery\Interfaces\TableInterface;
 
 /**
  * 抽象表类

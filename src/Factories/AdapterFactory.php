@@ -1,11 +1,11 @@
 <?php
 
-namespace ClickHouseQuery\Factories;
+namespace TxAdmin\ClickHouseQuery\Factories;
 
-use ClickHouseQuery\Exceptions\ClickHouseQueryException;
-use ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
-use ClickHouseQuery\Adapters\ThinkPHPAdapter;
-use ClickHouseQuery\Adapters\HyperfAdapter;
+use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
+use TxAdmin\ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
+use TxAdmin\ClickHouseQuery\Adapters\ThinkPHPAdapter;
+use TxAdmin\ClickHouseQuery\Adapters\HyperfAdapter;
 
 class AdapterFactory
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Interfaces;
+namespace TxAdmin\ClickHouseQuery\Interfaces;
 
 /**
  * 表接口

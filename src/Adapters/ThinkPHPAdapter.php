@@ -3,11 +3,11 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Adapters;
+namespace TxAdmin\ClickHouseQuery\Adapters;
 
 use think\db\ConnectionInterface;
 use think\facade\Db;
-use ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
+use TxAdmin\ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
 
 /**
  * ThinkPHP适配器

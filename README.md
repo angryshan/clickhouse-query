@@ -96,8 +96,8 @@ return [
 ### 基础查询
 
 ```php
-use ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
-use ClickHouseQuery\Tables\AbstractTable;
+use TxAdmin\ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder;
+use TxAdmin\ClickHouseQuery\Tables\AbstractTable;
 
 // 定义表
 class BusinessTable extends AbstractTable

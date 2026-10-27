@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQueryTest\Database;
+namespace TxAdmin\ClickHouseQueryTest\Database;
 
-use ClickHouseQuery\Exceptions\ClickHouseQueryException;
-use ClickHouseQueryTest\Mocks\MockConnectionAdapter;
+use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
+use TxAdmin\ClickHouseQueryTest\Mocks\MockConnectionAdapter;
 
 /**
  * ClickHouseConnection 公开方法单元测试

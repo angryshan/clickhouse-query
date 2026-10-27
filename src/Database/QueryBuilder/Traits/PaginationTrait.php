@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace ClickHouseQuery\Database\QueryBuilder\Traits;
+namespace TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits;
 
-use ClickHouseQuery\Exceptions\ClickHouseQueryException;
+use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
 
 /**
  * 分页查询（组件层：仅负责 limit/offset/count/返回结构）

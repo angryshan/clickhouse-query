@@ -258,7 +258,7 @@ $query->alias('t')
 
 `having(['t.cnt' => 1])` 表示表 `t` 的列 `cnt`，不是 SELECT 里的别名 `cnt`。聚合结果写 `having(['cnt' => 1])`。带前缀时，FROM 要先 `alias('t')`，字段必须是真实列，例如 `t.game_id`。
 
-ClickHouse 里 WHERE 用了 `t.column` 时，SELECT 也要自己写成 `t.column`，否则会报 Unknown identifier。`fresh()` 会清掉别名。
+`fresh()` 会清掉别名。
 
 ## 4. 全局条件控制
 

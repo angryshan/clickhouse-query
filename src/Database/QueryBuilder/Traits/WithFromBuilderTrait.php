@@ -29,10 +29,6 @@ trait WithFromBuilderTrait
      *
      * 别名会附加在 FROM 子句的表名（或 CTE 名称）之后：FROM table AS alias
      *
-     * 注意：ClickHouse 中 WHERE 子句使用 别名.字段 时，
-     * SELECT 中也必须使用 别名.字段，否则会报 Unknown identifier 错误。
-     * 用不用别名、怎么用，由开发自行决定。
-     *
      * @param string $alias 表别名
      * @return self
      */

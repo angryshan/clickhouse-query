@@ -6,13 +6,15 @@ namespace TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits;
 
 /**
  * WITH FROM 构建器
- * @package ClickHouseQuery\Database\QueryBuilder\Traits
+ * @package TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits
  * @author angryshan
  */
 trait WithFromBuilderTrait
 {
     private string $from = '';
+
     private array $with = [];
+
     private string $alias = '';
 
     /**
@@ -45,14 +47,30 @@ trait WithFromBuilderTrait
     {
         // 创建新的查询构建器实例（共用 connection）
         $subQuery = new static($this->table, $this->config, $this->connection);
-        
+
         // 执行回调，构建子查询
         $callback($subQuery);
-        
+
         // 添加到 WITH 数组
         $this->with[$alias] = $subQuery->buildQuery();
-        
+
         return $this;
+    }
+
+    /**
+     * 获取自定义 FROM（CTE 别名或覆盖物理表）
+     */
+    public function getFrom(): string
+    {
+        return $this->from;
+    }
+
+    /**
+     * 获取当前表别名
+     */
+    public function getAlias(): string
+    {
+        return $this->alias;
     }
 
     /**
@@ -85,28 +103,12 @@ trait WithFromBuilderTrait
         return $sql;
     }
 
-     /**
+    /**
      * 构建FROM部分
      */
     protected function buildFrom(): string
     {
         return $this->buildFromClause($this->table);
-    }
-
-    /**
-     * 获取自定义 FROM（CTE 别名或覆盖物理表）
-     */
-    public function getFrom(): string
-    {
-        return $this->from;
-    }
-
-    /**
-     * 获取当前表别名
-     */
-    public function getAlias(): string
-    {
-        return $this->alias;
     }
 
     /**
@@ -118,4 +120,4 @@ trait WithFromBuilderTrait
         $this->with = [];
         $this->alias = '';
     }
-} 
+}

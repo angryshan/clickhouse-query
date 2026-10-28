@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits;
 
 use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
+
 /**
  * 条件查询
- * @package ClickHouseQuery\Database\QueryBuilder\Traits
+ * @package TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits
  * @author angryshan
  */
 trait WhereBuilderTrait
 {
     private array $conditions = [
         'AND' => [],
-        'OR' => []
+        'OR' => [],
     ];
 
     /**
@@ -25,22 +26,11 @@ trait WhereBuilderTrait
      */
     public function formatField(string $field): string
     {
-        if (strpos($field, '.') !== false) {
+        if (str_contains($field, '.')) {
             $parts = explode('.', $field, 2);
             return "`{$parts[0]}`.`{$parts[1]}`";
         }
         return "`{$field}`";
-    }
-
-    /**
-     * 获取支持的操作符
-     */
-    private function getSupportedOperators(): array
-    {
-        return [
-            '=', '>', '<', '>=', '<=', '!=', '<>',
-            'in', 'not in', 'between', 'like'
-        ];
     }
 
     /**
@@ -54,7 +44,7 @@ trait WhereBuilderTrait
                 $this->conditions['AND'][] = $this->parseArrayCondition($value);
             } else {
                 // 等值查询: ['field' => value]
-                $this->conditions['AND'][] = $this->formatField($field) . " = " . $this->quoteValue($value);
+                $this->conditions['AND'][] = $this->formatField($field) . ' = ' . $this->quoteValue($value);
             }
         }
         return $this;
@@ -70,7 +60,7 @@ trait WhereBuilderTrait
                 $this->conditions['OR'][] = $this->parseArrayCondition($value);
             } else {
                 // 等值查询: ['field' => value]
-                $this->conditions['OR'][] = $this->formatField($field) . " = " . $this->quoteValue($value);
+                $this->conditions['OR'][] = $this->formatField($field) . ' = ' . $this->quoteValue($value);
             }
         }
         return $this;
@@ -81,7 +71,7 @@ trait WhereBuilderTrait
      */
     public function whereNull(string $column): self
     {
-        $this->conditions['AND'][] = $this->formatField($column) . " IS NULL";
+        $this->conditions['AND'][] = $this->formatField($column) . ' IS NULL';
         return $this;
     }
 
@@ -90,16 +80,16 @@ trait WhereBuilderTrait
      */
     public function whereNotNull(string $column): self
     {
-        $this->conditions['AND'][] = $this->formatField($column) . " IS NOT NULL";
+        $this->conditions['AND'][] = $this->formatField($column) . ' IS NOT NULL';
         return $this;
     }
-    
+
     /**
      * IN 条件
      */
     public function whereIn(string $column, array $values): self
     {
-        $this->conditions['AND'][] = sprintf("%s IN (%s)", $this->formatField($column), $this->formatInValues($values));
+        $this->conditions['AND'][] = sprintf('%s IN (%s)', $this->formatField($column), $this->formatInValues($values));
         return $this;
     }
 
@@ -108,17 +98,19 @@ trait WhereBuilderTrait
      */
     public function whereNotIn(string $column, array $values): self
     {
-        $this->conditions['AND'][] = sprintf("%s NOT IN (%s)", $this->formatField($column), $this->formatInValues($values));
+        $this->conditions['AND'][] = sprintf('%s NOT IN (%s)', $this->formatField($column), $this->formatInValues($values));
         return $this;
     }
 
     /**
      * BETWEEN 条件
+     * @param mixed $start
+     * @param mixed $end
      */
     public function whereBetween(string $column, $start, $end): self
     {
         $this->conditions['AND'][] = sprintf(
-            "%s BETWEEN %s AND %s",
+            '%s BETWEEN %s AND %s',
             $this->formatField($column),
             $this->formatValue($start),
             $this->formatValue($end)
@@ -132,19 +124,19 @@ trait WhereBuilderTrait
     public function whereGroup(callable $callback, string $type = 'AND'): self
     {
         // 创建一个新的条件数组
-        $builder = new class() {
+        $builder = new class {
             use WhereBuilderTrait;
         };
         $callback($builder);
         $groupConditions = $builder->getConditions();
-        
+
         if (!empty($groupConditions)) {
             $inner = $groupConditions[0];
             // getConditions() 对 OR-only 多条件或 AND+OR 混合情况会自带外层括号
             // 若已有外层括号则直接使用，避免双重括号 ((...))
             $this->conditions[$type][] = str_starts_with($inner, '(') ? $inner : "({$inner})";
         }
-        
+
         return $this;
     }
 
@@ -156,13 +148,13 @@ trait WhereBuilderTrait
         // 过滤掉空值条件
         $andConditions = array_filter($this->conditions['AND']);
         $orConditions = array_filter($this->conditions['OR']);
-        
+
         // 如果只有 AND 条件
         if (!empty($andConditions) && empty($orConditions)) {
             // AND 条件直接用 AND 连接,不需要括号
             return [implode(' AND ', $andConditions)];
         }
-        
+
         // 如果只有 OR 条件
         if (empty($andConditions) && !empty($orConditions)) {
             if (count($orConditions) > 1) {
@@ -170,20 +162,20 @@ trait WhereBuilderTrait
             }
             return [reset($orConditions)];
         }
-        
+
         // 如果同时有 AND 和 OR 条件
         if (!empty($andConditions) && !empty($orConditions)) {
-            $andPart = count($andConditions) > 1 
+            $andPart = count($andConditions) > 1
                 ? '(' . implode(' AND ', $andConditions) . ')'
                 : reset($andConditions);
-            
+
             $orPart = count($orConditions) > 1
                 ? '(' . implode(' OR ', $orConditions) . ')'
                 : reset($orConditions);
-            
+
             return ['(' . $andPart . ' OR ' . $orPart . ')'];
         }
-        
+
         return [];
     }
 
@@ -213,7 +205,7 @@ trait WhereBuilderTrait
 
         // 转换操作符为小写以统一比较
         $operator = strtolower($operator);
-        
+
         // 验证操作符是否支持
         if (!in_array($operator, $this->getSupportedOperators())) {
             throw new ClickHouseQueryException(
@@ -229,7 +221,7 @@ trait WhereBuilderTrait
             if (empty($value)) {
                 throw new ClickHouseQueryException('IN/NOT IN 操作符的值数组不能为空');
             }
-            return sprintf("%s %s (%s)", $this->formatField($field), strtoupper($operator), $this->formatInValues($value));
+            return sprintf('%s %s (%s)', $this->formatField($field), strtoupper($operator), $this->formatInValues($value));
         }
 
         // 处理 BETWEEN 条件
@@ -241,7 +233,7 @@ trait WhereBuilderTrait
                 throw new ClickHouseQueryException('BETWEEN 操作符的值不能为 NULL');
             }
             return sprintf(
-                "%s BETWEEN %s AND %s",
+                '%s BETWEEN %s AND %s',
                 $this->formatField($field),
                 $this->formatValue($value[0]),
                 $this->formatValue($value[1])
@@ -259,22 +251,23 @@ trait WhereBuilderTrait
     /**
      * 格式化 IN 条件的值
      */
-    public function formatInValues(array $values): string 
+    public function formatInValues(array $values): string
     {
         if (empty($values)) {
             throw new ClickHouseQueryException('IN 条件的值不能为空数组');
         }
-        
+
         return implode(',', array_map(function ($value) {
             if ($value === null) {
                 throw new ClickHouseQueryException('IN 条件的值不能为 NULL');
             }
-            return is_numeric($value) ? $value : "'" . str_replace("'", "\'", $value) . "'";
+            return is_numeric($value) ? $value : "'" . str_replace("'", "\\'", $value) . "'";
         }, $values));
     }
 
     /**
      * 格式化值
+     * @param mixed $value
      */
     public function formatValue($value): string
     {
@@ -291,18 +284,18 @@ trait WhereBuilderTrait
         }
 
         if (is_string($value)) {
-            return "'" . str_replace("'", "\'", $value) . "'";
+            return "'" . str_replace("'", "\\'", $value) . "'";
         }
 
-        return (string)$value;
+        return (string) $value;
     }
 
     /**
      * 为值添加引号并转义
-     * 
+     *
      * @param mixed $value 需要处理的值
      * @return mixed 处理后的值
-     * 
+     *
      * @example
      *   quoteValue('abc')      // 返回: 'abc'
      *   quoteValue("a'bc")     // 返回: 'a\'bc'
@@ -311,7 +304,7 @@ trait WhereBuilderTrait
     public function quoteValue($value)
     {
         if (is_string($value)) {
-            return "'" . str_replace("'", "\'", $value) . "'";
+            return "'" . str_replace("'", "\\'", $value) . "'";
         }
         return $value;
     }
@@ -338,12 +331,12 @@ trait WhereBuilderTrait
 
     /**
      * 当条件满足时，才会执行回调函数中的查询条件
-     * @param mixed         $value
-     * @param callable      $callback
-     * @param callable|null $default
+     * @param mixed $value
+     * @param callable $callback
+     * @param null|callable $default
      * @return $this|mixed
      */
-    public function when($value, callable $callback, callable $default = null)
+    public function when(mixed $value, callable $callback, ?callable $default = null): mixed
     {
         if ($value) {
             return $callback($this, $value) ?: $this;
@@ -354,4 +347,15 @@ trait WhereBuilderTrait
 
         return $this;
     }
-} 
+
+    /**
+     * 获取支持的操作符
+     */
+    private function getSupportedOperators(): array
+    {
+        return [
+            '=', '>', '<', '>=', '<=', '!=', '<>',
+            'in', 'not in', 'between', 'like',
+        ];
+    }
+}

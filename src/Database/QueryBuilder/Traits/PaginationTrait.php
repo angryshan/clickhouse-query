@@ -9,7 +9,7 @@ use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
 /**
  * 分页查询（组件层：仅负责 limit/offset/count/返回结构）
  *
- * @package ClickHouseQuery\Database\QueryBuilder\Traits
+ * @package TxAdmin\ClickHouseQuery\Database\QueryBuilder\Traits
  * @author angryshan
  */
 trait PaginationTrait
@@ -34,7 +34,7 @@ trait PaginationTrait
      *
      * @param int $perPage 每页条数
      * @param bool $wrapCountWithClause 计数是否用 WITH 子查询包装（由调用方决定，组件不自动判断）
-     * @param int|null $page 页码（从 1 开始）；null 时从当前 HTTP 请求读取（Adapter::getCurrentPage）
+     * @param null|int $page 页码（从 1 开始）；null 时从当前 HTTP 请求读取（Adapter::getCurrentPage）
      * @param string $pageName 请求参数名，默认 page
      * @param bool $useConnectionControl 是否使用连接控制
      * @return array{total:int,per_page:int,current_page:int,last_page:int,data:array}
@@ -87,8 +87,8 @@ trait PaginationTrait
             return $this->get($useConnectionControl);
         }
 
-        $page = max(1, (int)($params['page'] ?? 1));
-        $perPage = max(1, (int)($params['pageSize'] ?? 10));
+        $page = max(1, (int) ($params['page'] ?? 1));
+        $perPage = max(1, (int) ($params['pageSize'] ?? 10));
 
         $query = clone $this;
         if ($countField !== '') {
@@ -150,7 +150,7 @@ trait PaginationTrait
             return $this->newQuery()
                 ->from("({$subSql}) AS {$alias}")
                 ->count($countField, $useConnectionControl);
-            }
+        }
 
         return $this->cloneForCount()->count($countField, $useConnectionControl);
     }
@@ -188,7 +188,7 @@ trait PaginationTrait
             'total' => $total,
             'per_page' => $pageSize,
             'current_page' => $page,
-            'last_page' => $total > 0 ? (int)ceil($total / $pageSize) : 1,
+            'last_page' => $total > 0 ? (int) ceil($total / $pageSize) : 1,
             'data' => $data,
         ];
     }

@@ -10,7 +10,7 @@ use TxAdmin\ClickHouseQueryTest\Mocks\MockConnectionAdapter;
 /**
  * ClickHouseConnection 公开方法单元测试
  *
- * @covers \ClickHouseQuery\Database\Connection\ClickHouseConnection
+ * @covers \TxAdmin\ClickHouseQuery\Database\Connection\ClickHouseConnection
  */
 class ClickHouseConnectionTest extends DatabaseTestCase
 {
@@ -114,7 +114,7 @@ class ClickHouseConnectionTest extends DatabaseTestCase
     public function testQueryWrapsExceptionAsClickHouseQueryException(): void
     {
         $adapter = new class('clickhouse') extends MockConnectionAdapter {
-            public function query(string $sql)
+            public function query(string $sql): array
             {
                 throw new \RuntimeException('connection failed');
             }
@@ -160,7 +160,7 @@ class ClickHouseConnectionTest extends DatabaseTestCase
     public function testExecuteProceedsWhenRunningQueriesCountIsNull(): void
     {
         $adapter = new class('clickhouse') extends MockConnectionAdapter {
-            public function query(string $sql)
+            public function query(string $sql): array
             {
                 self::$executedSql[] = $sql;
 
@@ -189,7 +189,7 @@ class ClickHouseConnectionTest extends DatabaseTestCase
     public function testExecuteWrapsExceptionAsClickHouseQueryException(): void
     {
         $adapter = new class('clickhouse') extends MockConnectionAdapter {
-            public function query(string $sql)
+            public function query(string $sql): array
             {
                 throw new \RuntimeException('execute failed');
             }

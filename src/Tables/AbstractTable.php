@@ -8,7 +8,7 @@ use TxAdmin\ClickHouseQuery\Interfaces\TableInterface;
 
 /**
  * 抽象表类
- * @package ClickHouseQuery\Tables
+ * @package TxAdmin\ClickHouseQuery\Tables
  * @author angryshan
  */
 abstract class AbstractTable implements TableInterface
@@ -19,4 +19,4 @@ abstract class AbstractTable implements TableInterface
     {
         return $this->tableName;
     }
-} 
+}

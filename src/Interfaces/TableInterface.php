@@ -6,7 +6,7 @@ namespace TxAdmin\ClickHouseQuery\Interfaces;
 
 /**
  * 表接口
- * @package ClickHouseQuery\Interfaces
+ * @package TxAdmin\ClickHouseQuery\Interfaces
  * @author angryshan
  */
 interface TableInterface
@@ -15,4 +15,4 @@ interface TableInterface
      * 获取表名
      */
     public function getTableName(): string;
-} 
+}

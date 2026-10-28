@@ -1,11 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace TxAdmin\ClickHouseQuery\Factories;
 
+use Hyperf\Context\ApplicationContext;
+use Hyperf\HttpServer\Server;
+use think\App;
+use TxAdmin\ClickHouseQuery\Adapters\HyperfAdapter;
+use TxAdmin\ClickHouseQuery\Adapters\ThinkPHPAdapter;
 use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
 use TxAdmin\ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
-use TxAdmin\ClickHouseQuery\Adapters\ThinkPHPAdapter;
-use TxAdmin\ClickHouseQuery\Adapters\HyperfAdapter;
 
 class AdapterFactory
 {
@@ -14,15 +19,16 @@ class AdapterFactory
      */
     public function create(array $config, string $poolName): ConnectionAdapterInterface
     {
-        // 1. 显式配置（最高优先级）
         $adapter = $this->resolveFromExplicitConfig($config, $poolName);
-        if ($adapter) return $adapter;
-        
-        // 2. 自动检测（中等优先级）
+        if ($adapter !== null) {
+            return $adapter;
+        }
+
         $adapter = $this->detectFrameworkAdapter($poolName);
-        if ($adapter) return $adapter;
-        
-        // 3. 报错
+        if ($adapter !== null) {
+            return $adapter;
+        }
+
         throw new ClickHouseQueryException('请在配置中指定框架数据库适配器(adapter)参数');
     }
 
@@ -34,14 +40,15 @@ class AdapterFactory
         // 从配置中解析
         if (isset($config['adapter']) && class_exists($config['adapter'])) {
             $adapterClass = $config['adapter'];
+
             return new $adapterClass($poolName);
         }
-        
+
         $configAdapter = config('tx_clickhouse_query.adapter');
         if (!empty($configAdapter) && class_exists($configAdapter)) {
             return new $configAdapter($poolName);
         }
-        
+
         return null;
     }
 
@@ -50,34 +57,26 @@ class AdapterFactory
      */
     private function detectFrameworkAdapter(string $poolName): ?ConnectionAdapterInterface
     {
-        $detectedFramework = $this->detectFramework();
-        
-        switch ($detectedFramework) {
-            case 'thinkphp':
-                return new ThinkPHPAdapter($poolName);
-            case 'hyperf':
-                return new HyperfAdapter($poolName);
-            default:
-                return null;
-        }
+        return match ($this->detectFramework()) {
+            'thinkphp' => new ThinkPHPAdapter($poolName),
+            'hyperf' => new HyperfAdapter($poolName),
+            default => null,
+        };
     }
 
-    /**
-     * 检测当前运行的框架类型
-     */
     private function detectFramework(): ?string
     {
-        // 检测ThinkPHP
-        if (class_exists('\think\App') || class_exists('\Think\App')) {
+        if (class_exists(App::class)) {
             return 'thinkphp';
         }
-        
-        // 检测Hyperf
-        if (class_exists('\Hyperf\Framework\ApplicationFactory') || 
-            class_exists('\Hyperf\HttpServer\Server')) {
+
+        if (
+            class_exists(ApplicationContext::class)
+            || class_exists(Server::class)
+        ) {
             return 'hyperf';
         }
-        
+
         return null;
     }
 }

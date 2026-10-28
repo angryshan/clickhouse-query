@@ -11,7 +11,7 @@ use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
  * 查询服务抽象基类
  * 提供基础查询功能，业务逻辑应在子类中实现
  *
- * @package ClickHouseQuery\Services
+ * @package TxAdmin\ClickHouseQuery\Services
  * @author angryshan
  */
 abstract class AbstractService
@@ -25,6 +25,18 @@ abstract class AbstractService
      * 配置参数
      */
     protected array $config = [];
+
+    /**
+     * 设置配置参数
+     *
+     * @param array $config 配置参数
+     * @return self
+     */
+    public function setConfig(array $config): self
+    {
+        $this->config = array_merge($this->config, $config);
+        return $this;
+    }
 
     /**
      * 创建查询构建器
@@ -41,17 +53,5 @@ abstract class AbstractService
 
         $config = array_merge($this->config, $extraConfig);
         return new ClickHouseQueryBuilder($this->table, $config);
-    }
-
-    /**
-     * 设置配置参数
-     *
-     * @param array $config 配置参数
-     * @return self
-     */
-    public function setConfig(array $config): self
-    {
-        $this->config = array_merge($this->config, $config);
-        return $this;
     }
 }

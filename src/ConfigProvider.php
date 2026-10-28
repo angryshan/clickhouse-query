@@ -6,7 +6,7 @@ namespace TxAdmin\ClickHouseQuery;
 
 /**
  * 配置提供者
- * @package ClickHouseQuery
+ * @package TxAdmin\ClickHouseQuery
  * @author angryshan
  */
 class ConfigProvider
@@ -37,4 +37,4 @@ class ConfigProvider
             ],
         ];
     }
-} 
+}

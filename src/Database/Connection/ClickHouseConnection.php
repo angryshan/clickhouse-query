@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace TxAdmin\ClickHouseQuery\Database\Connection;
 
-use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
-use TxAdmin\ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
-use TxAdmin\ClickHouseQuery\Factories\AdapterFactory;
 use Throwable;
+use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
+use TxAdmin\ClickHouseQuery\Factories\AdapterFactory;
+use TxAdmin\ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
 
 /**
  * ClickHouse数据库连接
- * @package ClickHouseQuery\Database\Connection
+ * @package TxAdmin\ClickHouseQuery\Database\Connection
  * @author angryshan
  */
 class ClickHouseConnection
@@ -55,6 +55,7 @@ class ClickHouseConnection
      * @var array
      */
     private array $timePartitionOptimization = [];
+
     private ConnectionAdapterInterface $adapter;
 
     /**
@@ -64,35 +65,35 @@ class ClickHouseConnection
     {
         // 设置连接池名称
         $this->poolName = $config['pool_name'] ?? config('tx_clickhouse_query.pool_name', 'clickhouse');
-        
+
         // 创建适配器
         $adapterFactory = new AdapterFactory();
         $this->adapter = $adapterFactory->create($config, $this->poolName);
-        
+
         // 从适配器获取配置
-        $this->maxRunningProcesses = $config['max_running_processes'] ?? 
-            $this->adapter->getConfig('connection_control.max_running_processes', 5);
-            
-        $this->maxWaitAttempts = $config['max_wait_attempts'] ?? 
-            $this->adapter->getConfig('connection_control.max_wait_attempts', 60);
-            
-        $this->waitMinMicroseconds = $config['wait_min_microseconds'] ?? 
-            $this->adapter->getConfig('connection_control.wait_min_microseconds', 500000);
-            
-        $this->waitMaxMicroseconds = $config['wait_max_microseconds'] ?? 
-            $this->adapter->getConfig('connection_control.wait_max_microseconds', 1000000);
-        
+        $this->maxRunningProcesses = $config['max_running_processes']
+            ?? $this->adapter->getConfig('connection_control.max_running_processes', 5);
+
+        $this->maxWaitAttempts = $config['max_wait_attempts']
+            ?? $this->adapter->getConfig('connection_control.max_wait_attempts', 60);
+
+        $this->waitMinMicroseconds = $config['wait_min_microseconds']
+            ?? $this->adapter->getConfig('connection_control.wait_min_microseconds', 500000);
+
+        $this->waitMaxMicroseconds = $config['wait_max_microseconds']
+            ?? $this->adapter->getConfig('connection_control.wait_max_microseconds', 1000000);
+
         $this->initGlobalConditions($config);
 
         // 初始化时间分区优化
-        $this->timePartitionOptimization = $config['time_partition_optimization'] ?? 
-            $this->adapter->getConfig('time_partition_optimization', [
+        $this->timePartitionOptimization = $config['time_partition_optimization']
+            ?? $this->adapter->getConfig('time_partition_optimization', [
                 'enabled' => false,
                 'field_mapping' => [],
                 'timestamp_type' => 'seconds',
             ]);
     }
-    
+
     /**
      * 执行SQL查询
      *
@@ -108,20 +109,22 @@ class ClickHouseConnection
                 $this->waitForAvailableConnection();
             }
             return $this->adapter->query($sql);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             throw new ClickHouseQueryException($e->getMessage());
         }
     }
-    
+
     /**
      * 直接执行SQL查询
+     *
+     * @return array<int, array<string, mixed>>
      * @throws ClickHouseQueryException
      */
-    public function query(string $sql)
+    public function query(string $sql): array
     {
         try {
             return $this->adapter->query($sql);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             throw new ClickHouseQueryException($e->getMessage());
         }
     }
@@ -180,7 +183,7 @@ class ClickHouseConnection
         try {
             $result = $this->adapter->query('SELECT COUNT(*) AS running_queries FROM system.processes');
             return $result[0]['running_queries'] ?? null;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             throw new ClickHouseQueryException($e->getMessage());
         }
     }
@@ -200,4 +203,4 @@ class ClickHouseConnection
 
         $this->globalWhere = implode(' AND ', $conditions);
     }
-} 
+}

@@ -1,17 +1,20 @@
 <?php
+
 // src/Adapter/ThinkPHPAdapter.php
 
 declare(strict_types=1);
 
 namespace TxAdmin\ClickHouseQuery\Adapters;
 
+use RuntimeException;
 use think\db\ConnectionInterface;
 use think\facade\Db;
+use think\Paginator;
 use TxAdmin\ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
 
 /**
- * ThinkPHP适配器
- * @package ClickHouseQuery\Adapter
+ * ThinkPHP 适配器（ThinkPHP 8.x / PHP 8.4+）
+ * @package TxAdmin\ClickHouseQuery\Adapter
  * @author angryshan
  */
 class ThinkPHPAdapter implements ConnectionAdapterInterface
@@ -20,27 +23,17 @@ class ThinkPHPAdapter implements ConnectionAdapterInterface
      * @var ConnectionInterface
      */
     private ConnectionInterface $connection;
-    
-    /**
-     * @var string
-     */
-    private string $poolName;
-    
-    public function __construct(string $poolName = 'clickhouse')
-    {
-        $this->poolName = $poolName;
+
+    public function __construct(
+        private readonly string $poolName = 'clickhouse'
+    ) {
         $this->connection = Db::connect($this->poolName);
     }
-    
-    /**
-     * 执行查询
-     */
-    public function query(string $sql)
+
+    public function query(string $sql): array
     {
         $pdo = $this->connection->connect();
-
         $statement = $pdo->prepare($sql);
-
         $info = $statement->execute();
 
         if (!$info) {
@@ -50,13 +43,9 @@ class ThinkPHPAdapter implements ConnectionAdapterInterface
 
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
-    
-    /**
-     * 获取配置值
-     */
-    public function getConfig(string $key, $default = null)
+
+    public function getConfig(string $key, mixed $default = null): mixed
     {
-        // 适配ThinkPHP的配置系统
         return config("tx_clickhouse_query.{$key}", $default);
     }
 
@@ -66,8 +55,7 @@ class ThinkPHPAdapter implements ConnectionAdapterInterface
      */
     public function getRequestParams(): array
     {
-        $request = request();
-        return $request->param();
+        return request()->param();
     }
 
     /**
@@ -75,8 +63,9 @@ class ThinkPHPAdapter implements ConnectionAdapterInterface
      */
     public function getCurrentPage(string $varPage = 'page', int $default = 1): int
     {
-        if (class_exists(\think\Paginator::class)) {
-            $page = \think\Paginator::getCurrentPage($varPage, $default);
+        if (class_exists(Paginator::class)) {
+            $page = Paginator::getCurrentPage($varPage, $default);
+
             return $page >= 1 ? $page : $default;
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 // src/Interfaces/ConnectionAdapterInterface.php
 
 declare(strict_types=1);
@@ -7,17 +8,22 @@ namespace TxAdmin\ClickHouseQuery\Interfaces;
 
 /**
  * 数据库连接适配器接口
- * @package ClickHouseQuery\Interfaces
+ * @package TxAdmin\ClickHouseQuery\Interfaces
  * @author angryshan
  */
 interface ConnectionAdapterInterface
 {
-    public function query(string $sql);
-    public function getConfig(string $key, $default = null);
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function query(string $sql): array;
+
+    public function getConfig(string $key, mixed $default = null): mixed;
 
     /**
      * 获取当前请求的参数
-     * @return array
+     *
+     * @return array<string, mixed>
      */
     public function getRequestParams(): array;
 

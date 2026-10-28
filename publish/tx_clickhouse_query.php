@@ -24,7 +24,7 @@ return [
         // 示例: 'game_id' => 1, 
     ],
 
-    // 适配器 示例: \ClickHouseQuery\Adapters\HyperfAdapter::class
+    // 适配器 示例: \TxAdmin\ClickHouseQuery\Adapters\HyperfAdapter::class
     'adapter' => '',
     
     // 时间分区自动优化配置

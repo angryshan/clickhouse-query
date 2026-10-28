@@ -9,9 +9,9 @@
 
 ## 环境要求
 
-* php >= 7.4
-* hyperf >= 2.0
-* thinkphp >= 6.0
+* php >= 8.4
+* hyperf >= 3.0（可选）
+* thinkphp >= 8.0（可选）
 
 ## 安装
 
@@ -57,7 +57,7 @@ return [
     ],
     
     // 自定义适配器类
-    'adapter' => \ClickHouseQuery\Adapters\ThinkPHPAdapter::class, // 或 \ClickHouseQuery\Adapters\HyperfAdapter::class
+    'adapter' => \TxAdmin\ClickHouseQuery\Adapters\ThinkPHPAdapter::class, // 或 \TxAdmin\ClickHouseQuery\Adapters\HyperfAdapter::class
     
     // 时间分区自动优化配置
     'time_partition_optimization' => [
@@ -173,8 +173,8 @@ ClickHouse支持两种主要的连接协议：
 ```
 
 框架兼容性说明：
-- **ThinkPHP**: 使用`\ClickHouseQuery\Adapters\ThinkPHPAdapter`适配器
-- **Hyperf**: 使用`\ClickHouseQuery\Adapters\HyperfAdapter`适配器
+- **ThinkPHP**: 使用`\TxAdmin\ClickHouseQuery\Adapters\ThinkPHPAdapter`适配器
+- **Hyperf**: 使用`\TxAdmin\ClickHouseQuery\Adapters\HyperfAdapter`适配器
 
 **适配器选择策略**:
 1. 优先使用配置中显式指定的适配器

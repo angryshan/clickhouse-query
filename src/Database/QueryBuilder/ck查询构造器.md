@@ -329,7 +329,7 @@ $query->fresh()->where([['type', '=', 2]])->get();
 // 在创建查询构建器时指定配置
 $query = new ClickHouseQueryBuilder('table_name', [
     'pool_name' => 'custom_clickhouse',
-    'adapter' => \ClickHouseQuery\Adapters\ThinkPHPAdapter::class,
+    'adapter' => \TxAdmin\ClickHouseQuery\Adapters\ThinkPHPAdapter::class,
     'max_running_processes' => 10
 ]);
 ```

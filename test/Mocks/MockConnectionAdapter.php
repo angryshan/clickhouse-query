@@ -47,7 +47,7 @@ class MockConnectionAdapter implements ConnectionAdapterInterface
         self::$runningQueriesCount = 0;
     }
 
-    public function query(string $sql)
+    public function query(string $sql): array
     {
         self::$executedSql[] = $sql;
 
@@ -63,7 +63,7 @@ class MockConnectionAdapter implements ConnectionAdapterInterface
         return [];
     }
 
-    public function getConfig(string $key, $default = null)
+    public function getConfig(string $key, mixed $default = null): mixed
     {
         $segments = explode('.', $key);
         $value = self::$config;

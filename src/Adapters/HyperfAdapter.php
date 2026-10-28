@@ -1,16 +1,20 @@
 <?php
-// src/Adapter/HyperfAdapter.php
 
 declare(strict_types=1);
 
 namespace TxAdmin\ClickHouseQuery\Adapters;
 
+use Hyperf\Context\ApplicationContext;
 use Hyperf\DB\DB;
+use Hyperf\HttpServer\Contract\RequestInterface;
+use Hyperf\Paginator\Paginator;
+use Psr\Container\ContainerInterface;
+use RuntimeException;
 use TxAdmin\ClickHouseQuery\Interfaces\ConnectionAdapterInterface;
 
 /**
- * Hyperf适配器
- * @package ClickHouseQuery\Adapter
+ * Hyperf 适配器（Hyperf 3.x / PHP 8.4+）
+ * @package TxAdmin\ClickHouseQuery\Adapter
  * @author angryshan
  */
 class HyperfAdapter implements ConnectionAdapterInterface
@@ -19,24 +23,16 @@ class HyperfAdapter implements ConnectionAdapterInterface
      * @var DB
      */
     private DB $connection;
-    
-    /**
-     * @var string
-     */
-    private string $poolName;
-    
-    public function __construct(string $poolName = 'clickhouse')
-    {
-        $this->poolName = $poolName;
+
+    public function __construct(
+        private readonly string $poolName = 'clickhouse'
+    ) {
         $this->connection = DB::connection($this->poolName);
     }
-    
-    /**
-     * 执行查询
-     */
-    public function query(string $sql)
+
+    public function query(string $sql): array
     {
-        return $this->connection->run(function (\PDO $pdo) use ($sql) {
+        return $this->connection->run(function (\PDO $pdo) use ($sql): array {
             $statement = $pdo->prepare($sql);
             $info = $statement->execute();
 
@@ -48,11 +44,8 @@ class HyperfAdapter implements ConnectionAdapterInterface
             return $statement->fetchAll(\PDO::FETCH_ASSOC);
         });
     }
-    
-    /**
-     * 获取配置值
-     */
-    public function getConfig(string $key, $default = null)
+
+    public function getConfig(string $key, mixed $default = null): mixed
     {
         return config("tx_clickhouse_query.{$key}", $default);
     }
@@ -63,9 +56,7 @@ class HyperfAdapter implements ConnectionAdapterInterface
      */
     public function getRequestParams(): array
     {
-        $container = \Hyperf\Utils\ApplicationContext::getContainer();
-        $request = $container->get(\Hyperf\HttpServer\Contract\RequestInterface::class);
-        return $request->all();
+        return $this->getContainer()->get(RequestInterface::class)->all();
     }
 
     /**
@@ -73,19 +64,23 @@ class HyperfAdapter implements ConnectionAdapterInterface
      */
     public function getCurrentPage(string $varPage = 'page', int $default = 1): int
     {
-        if (class_exists(\Hyperf\Paginator\Paginator::class)) {
-            $page = \Hyperf\Paginator\Paginator::resolveCurrentPage($varPage, $default);
+        if (class_exists(Paginator::class)) {
+            $page = Paginator::resolveCurrentPage($varPage, $default);
+
             return $page >= 1 ? $page : $default;
         }
 
-        $container = \Hyperf\Utils\ApplicationContext::getContainer();
-        $request = $container->get(\Hyperf\HttpServer\Contract\RequestInterface::class);
-        $page = $request->input($varPage, $default);
+        $page = $this->getContainer()->get(RequestInterface::class)->input($varPage, $default);
 
         if (filter_var($page, FILTER_VALIDATE_INT) !== false && (int) $page >= 1) {
             return (int) $page;
         }
 
         return $default;
+    }
+
+    private function getContainer(): ContainerInterface
+    {
+        return ApplicationContext::getContainer();
     }
 }

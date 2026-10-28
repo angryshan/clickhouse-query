@@ -13,7 +13,7 @@ use TxAdmin\ClickHouseQueryTest\Mocks\MockConnectionAdapter;
  * SQL 构建类用例通过 toSql() / getBuildWhere() 断言，无需真实数据库。
  * 执行类用例（get/first/count/paginate）通过 MockConnectionAdapter 模拟返回。
  *
- * @covers \ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder
+ * @covers \TxAdmin\ClickHouseQuery\Database\QueryBuilder\ClickHouseQueryBuilder
  */
 class ClickHouseQueryBuilderTest extends DatabaseTestCase
 {

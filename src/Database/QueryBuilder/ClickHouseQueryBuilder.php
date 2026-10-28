@@ -13,7 +13,7 @@ use TxAdmin\ClickHouseQuery\Exceptions\ClickHouseQueryException;
 
 /**
  * 构建ClickHouse查询
- * @package ClickHouseQuery\Database\QueryBuilder
+ * @package TxAdmin\ClickHouseQuery\Database\QueryBuilder
  * @author angryshan
  */
 class ClickHouseQueryBuilder
@@ -24,15 +24,21 @@ class ClickHouseQueryBuilder
     use PaginationTrait;
 
     private array $fields = [];
+
     private array $groupBy = [];
+
     private array $orderBy = [];
+
     private int $limit = 0;
+
     private int $offset = 0;
+
     private array $havingConditions = [];
 
     private array $config = [];
 
     private string $table;
+
     private ClickHouseConnection $connection;
 
     /**
@@ -50,7 +56,7 @@ class ClickHouseQueryBuilder
      *
      * @param string $table 表名
      * @param array $config 配置
-     * @param ClickHouseConnection|null $connection 传入则共用连接（newQuery 场景）
+     * @param null|ClickHouseConnection $connection 传入则共用连接（newQuery 场景）
      */
     public function __construct(string $table, array $config = [], ?ClickHouseConnection $connection = null)
     {
@@ -95,7 +101,7 @@ class ClickHouseQueryBuilder
         $this->groupBy = $groups;
         return $this;
     }
-    
+
     /**
      * 添加 HAVING 子句
      *
@@ -110,7 +116,7 @@ class ClickHouseQueryBuilder
                 $this->havingConditions[] = $this->parseArrayCondition($value);
             } else {
                 // 等值查询: ['field' => value]，alias.field 与 WHERE 一样拆段加反引号
-                $this->havingConditions[] = $this->formatField((string)$field) . ' = ' . $this->quoteValue($value);
+                $this->havingConditions[] = $this->formatField((string) $field) . ' = ' . $this->quoteValue($value);
             }
         }
 
@@ -120,7 +126,7 @@ class ClickHouseQueryBuilder
     /**
      * 设置排序条件
      *
-     * @param string|array $column 排序字段或排序条件数组
+     * @param array|string $column 排序字段或排序条件数组
      * @param string $direction 排序方向(ASC|DESC)，当$column为字符串时使用
      * @return self
      */
@@ -129,11 +135,11 @@ class ClickHouseQueryBuilder
         // 处理数组格式：['field1' => 'ASC', 'field2' => 'DESC']
         if (is_array($column)) {
             foreach ($column as $field => $dir) {
-                $this->orderBy[] = $this->formatField((string)$field) . ' ' . strtoupper((string)$dir);
+                $this->orderBy[] = $this->formatField((string) $field) . ' ' . strtoupper((string) $dir);
             }
         } else {
             // 处理字符串格式：'field', 'ASC'；t.log_time → `t`.`log_time`
-            $this->orderBy[] = $this->formatField((string)$column) . ' ' . strtoupper($direction);
+            $this->orderBy[] = $this->formatField((string) $column) . ' ' . strtoupper($direction);
         }
         return $this;
     }
@@ -149,7 +155,7 @@ class ClickHouseQueryBuilder
         $this->limit = $limit;
         return $this;
     }
-    
+
     /**
      * 设置偏移量
      *
@@ -217,7 +223,7 @@ class ClickHouseQueryBuilder
 
         // 设置 COUNT 查询
         if (empty($column)) {
-            $this->fields = ["count() as count"]; // 使用 count() 而不是 count(*)
+            $this->fields = ['count() as count']; // 使用 count() 而不是 count(*)
         } else {
             $this->fields = ["count({$column}) as count"];
         }
@@ -231,7 +237,7 @@ class ClickHouseQueryBuilder
         $this->orderBy = $originalOrderBy;
 
         // 返回统计结果
-        return (int)($result[0]['count'] ?? 0);
+        return (int) ($result[0]['count'] ?? 0);
     }
 
     /**
@@ -265,13 +271,52 @@ class ClickHouseQueryBuilder
         $this->useGlobalConditions = false;
         return $this;
     }
-    
+
     /**
      * 启用全局条件
      */
     public function withGlobalConditions(): self
     {
         $this->useGlobalConditions = true;
+        return $this;
+    }
+
+    /**
+     * 获取构建WHERE部分
+     */
+    public function getBuildWhere(): string
+    {
+        return $this->buildWhere();
+    }
+
+    /**
+     * 获取构建ORDER BY部分
+     */
+    public function getBuildOrderBy(): string
+    {
+        return $this->buildOrderBy();
+    }
+
+    /**
+     * 清空当前构建器上的查询条件（同表新实例请用 newQuery()）
+     */
+    public function fresh(): self
+    {
+        $this->fields = [];
+        $this->conditions = [
+            'AND' => [],
+            'OR' => [],
+        ];
+        $this->havingConditions = [];
+        $this->groupBy = [];
+        $this->orderBy = [];
+        $this->limit = 0;
+        $this->offset = 0;
+        $this->useGlobalConditions = true;
+        $this->conditionsOptimized = false;
+        $this->resetWithFrom();
+        $this->resetPaginationOptions();
+
         return $this;
     }
 
@@ -293,9 +338,9 @@ class ClickHouseQueryBuilder
             'LIMIT' => $this->buildLimit(),
         ];
 
-        return implode(' ', array_filter($parts, fn($part) => !empty($part)));
+        return implode(' ', array_filter($parts, fn ($part) => !empty($part)));
     }
-    
+
     /**
      * 构建SELECT部分
      */
@@ -330,14 +375,6 @@ class ClickHouseQueryBuilder
     }
 
     /**
-     * 获取构建WHERE部分
-     */
-    public function getBuildWhere(): string
-    {
-        return $this->buildWhere();
-    }
-
-    /**
      * 构建GROUP BY部分
      */
     private function buildGroupBy(): string
@@ -351,14 +388,6 @@ class ClickHouseQueryBuilder
     private function buildOrderBy(): string
     {
         return !empty($this->orderBy) ? 'ORDER BY ' . implode(', ', $this->orderBy) : '';
-    }
-
-    /**
-     * 获取构建ORDER BY部分
-     */
-    public function getBuildOrderBy(): string
-    {
-        return $this->buildOrderBy();
     }
 
     /**
@@ -384,29 +413,4 @@ class ClickHouseQueryBuilder
     {
         return !empty($this->havingConditions) ? 'HAVING ' . implode(' AND ', $this->havingConditions) : '';
     }
-
-    /**
-     * 清空当前构建器上的查询条件（同表新实例请用 newQuery()）
-     */
-    public function fresh(): self
-    {
-        $this->fields = [];
-        $this->conditions = [
-            'AND' => [],
-            'OR' => []
-        ];
-        $this->havingConditions = [];
-        $this->groupBy = [];
-        $this->orderBy = [];
-        $this->limit = 0;
-        $this->offset = 0;
-        $this->useGlobalConditions = true;
-        $this->conditionsOptimized = false;
-        $this->resetWithFrom();
-        $this->resetPaginationOptions();
-
-        return $this;
-    }
-
-
-} 
+}

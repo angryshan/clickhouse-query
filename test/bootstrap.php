@@ -12,7 +12,7 @@ if (!function_exists('config')) {
     /**
      * 单元测试环境下的 config 桩函数（框架运行时由 TP/Hyperf 提供）
      */
-    function config(string $key, $default = null)
+    function config(string $key, mixed $default = null): mixed
     {
         return $default;
     }
